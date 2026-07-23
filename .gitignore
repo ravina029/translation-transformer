@@ -1,0 +1,39 @@
+# Virtual environment
+.venv/
+venv/
+env/
+.tvenv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Testing and coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# Environment variables and secrets
+.env
+.env.*
+
+
+# Model checkpoints and generated outputs
+outputs/*
+checkpoints/
+*.pt
+*.pth
+*.ckpt
+
+# Keep the outputs directory visible
+!outputs/.gitkeep
