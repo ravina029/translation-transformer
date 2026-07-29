@@ -8,3 +8,7 @@ version = "0.1.0"
 description = "Transformer-based machine translation project"
 readme = "README.md"
 requires-python = ">=3.10"
+
+[tool.black]
+target-version = ["py310"]
+line-length = 88
