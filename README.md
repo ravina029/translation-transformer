@@ -46,3 +46,15 @@ Test result:
 
 ```text
 6 passed
+
+### Positional Encoding implementation
+
+Implemented reusable sinusoidal positional encoding from the *Attention Is All You Need* paper in `modelling/positional_encoding.py`.
+
+The module:
+
+* adds token-position information to embeddings;
+* uses sine for even dimensions and cosine for odd dimensions;
+* preserves the shape `(batch_size, sequence_length, hidden_size)`;
+* uses `register_buffer` because positional encodings are fixed, not trainable;
+* can be reused by both the encoder and decoder.
