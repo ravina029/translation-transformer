@@ -8,6 +8,9 @@ env/
 __pycache__/
 *.py[cod]
 *$py.class
+.pytest_cache/
+__pycache__/
+*.pyc
 
 # Testing and coverage
 .pytest_cache/
