@@ -1,60 +1,187 @@
 # Translation Transformer
 
-A machine translation project implementing a Transformer architecture.
+A PyTorch implementation of the Transformer architecture described in
+*Attention Is All You Need*, developed for German-to-English machine translation.
 
 ## Project status
 
-Initial project structure and environment setup.
+Implemented and unit-tested:
 
-## Structure
+- scaled dot-product attention;
+- multi-head attention;
+- sinusoidal positional encoding;
+- Transformer encoder;
+- Transformer decoder.
 
-- `modelling/`: Transformer architecture and model components
-- `training/`: Training pipeline
-- `tests/`: Unit and integration tests
-- `outputs/`: Generated outputs and model artifacts
+In progress:
+
+- complete encoder-decoder model;
+- WMT17 German-English data pipeline;
+- training and evaluation;
+- translation inference;
+- command-line interface.
+
+## Project structure
+
+```text
+modelling/   Transformer model components
+training/    Data processing and training code
+tests/       Unit and integration tests
+outputs/     Checkpoints, logs, and generated translations
+```
 
 ## Setup
 
+Create and activate the virtual environment:
+
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
+python3 -m venv .tvenv
+source .tvenv/bin/activate
+```
+
+Install dependencies:
+
+```bash
 pip install -r requirements.txt
+```
 
+## Implemented components
 
-## 5. Handle `requirements.txt` and `pyproject.toml`
+### Attention
 
-```text
-torch
-numpy
-pytest
+Implemented scaled dot-product attention and multi-head attention with support
+for self-attention, cross-attention, causal masking, and padding masks.
 
+Run:
 
-## Attention implementation
+```bash
+python -m pytest tests/test_attention.py -v
+```
 
-The scaled dot-product attention and multi-head attention mechanisms were
-implemented from scratch using PyTorch tensor operations and linear layers.
-
-Test coverage includes:
-
-- self-attention;
-- causal self-attention;
-- cross-attention;
-- padding masking;
-- multi-head projection and recombination.
-
-Test result:
+Current result:
 
 ```text
 6 passed
+```
 
-### Positional Encoding implementation
+### Positional encoding
 
-Implemented reusable sinusoidal positional encoding from the *Attention Is All You Need* paper in `modelling/positional_encoding.py`.
+Implemented sinusoidal positional encoding with dropout, shape validation, and
+a non-trainable registered buffer.
 
-The module:
+Run:
 
-* adds token-position information to embeddings;
-* uses sine for even dimensions and cosine for odd dimensions;
-* preserves the shape `(batch_size, sequence_length, hidden_size)`;
-* uses `register_buffer` because positional encodings are fixed, not trainable;
-* can be reused by both the encoder and decoder.
+```bash
+python -m pytest tests/test_positional_encoding.py -v
+```
+
+Current result:
+
+```text
+5 passed
+```
+
+### Encoder
+
+Implemented the Transformer encoder with:
+
+- scaled token embeddings;
+- sinusoidal positional encoding;
+- bidirectional multi-head self-attention;
+- source padding masks;
+- position-wise feed-forward networks;
+- residual connections;
+- dropout;
+- post-layer normalization;
+- stacked encoder layers.
+
+Input:
+
+```text
+source_token_ids: (batch_size, source_length)
+```
+
+Output:
+
+```text
+encoder_output: (batch_size, source_length, hidden_size)
+```
+
+Run:
+
+```bash
+python -m pytest tests/test_encoder.py -v
+```
+
+Current result:
+
+```text
+11 passed
+```
+
+### Decoder
+
+Implemented the Transformer decoder with:
+
+- scaled target-token embeddings;
+- sinusoidal positional encoding;
+- causal multi-head self-attention;
+- encoder-decoder cross-attention;
+- source and target padding masks;
+- position-wise feed-forward networks;
+- residual connections;
+- dropout;
+- post-layer normalization;
+- stacked decoder layers.
+
+The decoder requires right-padded target sequences.
+
+Inputs:
+
+```text
+target_token_ids: (batch_size, target_length)
+encoder_output:   (batch_size, source_length, hidden_size)
+source_mask:      (batch_size, source_length)
+target_mask:      (batch_size, target_length)
+```
+
+Output:
+
+```text
+decoder_output: (batch_size, target_length, hidden_size)
+```
+
+Run:
+
+```bash
+python -m pytest tests/test_decoder.py -v
+```
+
+Current result:
+
+```text
+9 passed
+```
+
+## Run all tests
+
+```bash
+python -m pytest tests/ -v
+```
+
+Current component-level test total:
+
+```text
+31 passed
+```
+
+## Next steps
+
+1. Implement the complete encoder-decoder Transformer wrapper.
+2. Add the target-vocabulary output projection.
+3. Add YAML-based configuration.
+4. Load and tokenize WMT17 German-English data.
+5. Implement batching, target shifting, and padding-aware loss.
+6. Implement training, validation, checkpointing, and inference.
+7. Add a runnable command-line interface.
+8. Report training statistics and example translations.
