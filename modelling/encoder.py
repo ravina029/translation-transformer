@@ -59,6 +59,7 @@ class PositionWiseFeedForward(nn.Module):
 
         return x
 
+
 class EncoderLayer(nn.Module):
     """
        Transformer encoder layer with self-attention and a position-wise feed-forward network. Uses residual connections, dropout, 
@@ -76,33 +77,21 @@ class EncoderLayer(nn.Module):
         super().__init__()
 
         if hidden_size <= 0:
-            raise ValueError(
-                f"hidden_size must be positive, got {hidden_size}"
-            )
-
+            raise ValueError( f"hidden_size must be positive, got {hidden_size}" )           
+                
         if number_of_heads <= 0:
-            raise ValueError(
-                "number_of_heads must be positive, "
-                f"got {number_of_heads}"
-            )
+            raise ValueError( "number_of_heads must be positive, " f"got {number_of_heads}" )
 
         if hidden_size % number_of_heads != 0:
-            raise ValueError(
-                f"hidden_size ({hidden_size}) must be divisible by "
-                f"number_of_heads ({number_of_heads})"
-            )
-
+            raise ValueError( f"hidden_size ({hidden_size}) must be divisible by "
+                                            f"number_of_heads ({number_of_heads})" )
+                                        
         if feed_forward_size <= 0:
-            raise ValueError(
-                "feed_forward_size must be positive, "
-                f"got {feed_forward_size}"
-            )
-
-        if not 0.0 <= dropout <= 1.0:
-            raise ValueError(
-                f"dropout must be between 0 and 1, got {dropout}"
-            )
-
+            raise ValueError( "feed_forward_size must be positive, " f"got {feed_forward_size}" )  
+                                                                                                         
+        if not 0.0 <= dropout < 1.0:
+            raise ValueError( f"dropout must be in [0, 1), got {dropout}" )
+                        
         self.hidden_size = hidden_size
         self.number_of_heads = number_of_heads
         self.feed_forward_size = feed_forward_size
