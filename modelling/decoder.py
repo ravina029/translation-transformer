@@ -21,21 +21,21 @@ class DecoderLayer(nn.Module):
         feed_forward_size: int,
         dropout: float = 0.1,
     ) -> None:
-        
+
         super().__init__()
 
         if hidden_size <= 0:
-            raise ValueError( f"hidden_size must be positive, got {hidden_size}" )             
+            raise ValueError( f"hidden_size must be positive, got {hidden_size}" )
 
         if number_of_heads <= 0:
-            raise ValueError( "number_of_heads must be positive, " f"got {number_of_heads}"  )                                                              
-                
+            raise ValueError( "number_of_heads must be positive, " f"got {number_of_heads}"  )
+
         if hidden_size % number_of_heads != 0:
             raise ValueError( f"hidden_size ({hidden_size}) must be divisible by " f"number_of_heads ({number_of_heads})" )
-                                    
+
         if feed_forward_size <= 0:
             raise ValueError( "feed_forward_size must be positive, " f"got {feed_forward_size}"  )
-                                   
+
         if not 0.0 <= dropout < 1.0:
             raise ValueError( f"dropout must be in [0, 1), got {dropout}"  )
 
@@ -76,7 +76,7 @@ class DecoderLayer(nn.Module):
             encoder_output: Tensor,
             target_mask: Tensor,
             source_mask: Tensor,
-        ) -> Tensor: 
+        ) -> Tensor:
 
         """
         Apply causal self-attention, cross-attention, and feed-forward processing.
@@ -102,7 +102,7 @@ class DecoderLayer(nn.Module):
             raise ValueError( "x and encoder_output must have the same batch size" )
 
         if encoder_output.device != x.device:
-            raise ValueError( "x and encoder_output must be on the same device" )            
+            raise ValueError( "x and encoder_output must be on the same device" )
 
         target_mask = target_mask.to(
             device=x.device,
@@ -131,7 +131,7 @@ class DecoderLayer(nn.Module):
 
         x = self.self_attention_norm( x+ self.self_attention_dropout( self_attention_output ) )
 
-        # 2. Encoder-decoder cross-attention.       
+        # 2. Encoder-decoder cross-attention.
         # Queries come from the decoder. Keys and values come from the encoder output.
         cross_attention_output = self.cross_attention(
             query=x,
@@ -195,7 +195,7 @@ class Decoder(nn.Module):
             raise ValueError( f"dropout must be in [0, 1), got {dropout}" )
 
         if not 0 <= padding_token_id < vocabulary_size:
-            raise ValueError( "padding_token_id must be within the vocabulary: "                
+            raise ValueError( "padding_token_id must be within the vocabulary: "
                 f"expected a value from 0 to {vocabulary_size - 1}, "  f"got {padding_token_id}" )
 
         self.vocabulary_size = vocabulary_size
@@ -206,11 +206,11 @@ class Decoder(nn.Module):
         self.embedding_scale = math.sqrt(hidden_size)
 
         self.token_embedding = nn.Embedding( num_embeddings=vocabulary_size, embedding_dim=hidden_size,
-                            padding_idx=padding_token_id, )                    
-            
+                            padding_idx=padding_token_id, )
 
-        self.positional_encoding = PositionalEncoding( hidden_size=hidden_size, max_length=max_length, dropout=dropout, )                         
-                    
+
+        self.positional_encoding = PositionalEncoding( hidden_size=hidden_size, max_length=max_length, dropout=dropout, )
+
 
         self.layers = nn.ModuleList(
             [
@@ -245,7 +245,7 @@ class Decoder(nn.Module):
 
         if ( (target_token_ids < 0).any() or (target_token_ids >= self.vocabulary_size).any() ):
             raise ValueError( "target_token_ids must be between " f"0 and {self.vocabulary_size - 1}"  )
-                                                      
+
         batch_size = target_token_ids.size(0)
         target_length = target_token_ids.size(1)
 
@@ -287,10 +287,10 @@ class Decoder(nn.Module):
         target_mask = target_mask.to( device=target_token_ids.device, dtype=torch.bool,  )
 
         # Detect a valid token appearing after padding in each sequence.
-        invalid_right_padding = ( (~target_mask[:, :-1]) & target_mask[:, 1:]  ).any(dim=1)                                                           
+        invalid_right_padding = ( (~target_mask[:, :-1]) & target_mask[:, 1:]  ).any(dim=1)
         if invalid_right_padding.any().item():
-            raise ValueError( "target sequences must use right padding because " "decoder self-attention is causal"  )       
-                                                           
+            raise ValueError( "target sequences must use right padding because " "decoder self-attention is causal"  )
+
         # Completely masked sequences would produce all -inf attention rows and NaN values after softmax.
         if not source_mask.any(dim=1).all():
             raise ValueError(
@@ -312,6 +312,4 @@ class Decoder(nn.Module):
         for layer in self.layers:
             x = layer( x=x, encoder_output=encoder_output, target_mask=target_mask, source_mask=source_mask,  )
 
-                                               
         return x
-    
