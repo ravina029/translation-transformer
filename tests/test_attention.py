@@ -1,49 +1,27 @@
 import os
-
 import sys
-
-
-
 import pytest
-
 import torch
 
-
-
 # Add the parent directory to the system path for importing modules
-
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-
-
 # Specify the pat to import your attention mechanism
-
 from modelling.attention import Attention
 
-
-
 # Define test data for hidden states and attention masks
-
 VALUE = torch.tensor(
-
     [
-
         [[0.0349, 0.3211, 1.5736, -0.8455], [0.0000, 0.0000, 0.0000, 0.0000]],
 
         [[-1.4181, 0.8963, 0.0499, 2.2667], [1.1790, -0.4345, -1.3864, -1.2862]],
-
     ]
 
 )
 
-
-
 QUERY = torch.tensor(
-
     [
-
         [
-
             [1.9269, 1.4873, 0.9007, -2.1055],
 
             [0.6784, -1.2345, -0.0431, -1.6047],
@@ -53,7 +31,6 @@ QUERY = torch.tensor(
         ],
 
         [
-
             [-1.1109, 0.0915, -2.3169, -0.2168],
 
             [-0.3097, -0.3957, 0.8034, -0.6216],
@@ -67,15 +44,11 @@ QUERY = torch.tensor(
 )
 
 
-
 QUERY_ATTENTION_MASK = torch.tensor([[1, 1, 1], [1, 1, 0]])
 
 VALUE_ATTENTION_MASK = torch.tensor([[1, 0], [1, 1]])
 
-
-
 # Define test data for attention outputs
-
 ATTENTION_TEST_DATA = [
 
     (
@@ -381,11 +354,7 @@ ATTENTION_TEST_DATA = [
 ]
 
 
-
-
-
 # Attention Layer Tests
-
 @pytest.mark.parametrize(
 
     "attention_layer, query, value, attention_mask, expected",
