@@ -12,7 +12,6 @@ class PositionWiseFeedForward(nn.Module):
     Position-wise feed-forward network used in each Transformer encoder layer. Every sequence position is processed independently using the
     same two linear transformations.
     Shape flow: (B, L, hidden_size) -> (B, L, feed_forward_size) -> (B, L, hidden_size)
-
     """
     def __init__(self, hidden_size: int, feed_forward_size: int, ) -> None:
         super().__init__()
@@ -40,7 +39,6 @@ class PositionWiseFeedForward(nn.Module):
         """
         Args: x: Tensor of shape (B, L, hidden_size).
         Returns: Tensor of shape (B, L, hidden_size).
-
         """
 
         if x.ndim != 3:
@@ -63,8 +61,7 @@ class PositionWiseFeedForward(nn.Module):
 class EncoderLayer(nn.Module):
     """
        Transformer encoder layer with self-attention and a position-wise feed-forward network. Uses residual connections, dropout, 
-        and post-layer normalization. Input/output shape: (batch_size, sequence_length, hidden_size)
-                    
+        and post-layer normalization. Input/output shape: (batch_size, sequence_length, hidden_size)                
     """
     def __init__(
         self,
@@ -96,9 +93,7 @@ class EncoderLayer(nn.Module):
         self.number_of_heads = number_of_heads
         self.feed_forward_size = feed_forward_size
 
-
         # Encoder self-attention is bidirectional, so it must not use a future/causal mask.
-
         self.self_attention = MultiHeadAttention(
             hidden_size=hidden_size,
             number_of_heads=number_of_heads,
@@ -109,21 +104,20 @@ class EncoderLayer(nn.Module):
             hidden_size=hidden_size,
             feed_forward_size=feed_forward_size,
         )
-        # Dropout is applied to each sublayer's output before the residual connection.
 
+        # Dropout is applied to each sublayer's output before the residual connection.
         self.attention_dropout = nn.Dropout(dropout)
         self.feed_forward_dropout = nn.Dropout(dropout)
 
         # Post-normalization: LayerNorm(x + Sublayer(x))
-
         self.attention_norm = nn.LayerNorm(hidden_size)
         self.feed_forward_norm = nn.LayerNorm(hidden_size)
 
     def forward( self, x: Tensor, source_mask: Tensor, ) -> Tensor:
         """
         Apply encoder self-attention and feed-forward processing. x: Hidden states of shape (B, L, hidden_size).
-        source_mask: Padding mask of shape (B, L). Returns: Updated hidden states with the same shape as x.
-        
+        source_mask: Padding mask of shape (B, L). 
+        Returns: Updated hidden states with the same shape as x.        
         """      
         if x.ndim != 3:
             raise ValueError( "x must have shape " "(batch_size, source_length, hidden_size)" )           
@@ -139,20 +133,16 @@ class EncoderLayer(nn.Module):
                  f"but received {tuple(source_mask.shape)}" 
                 )                                   
                             
-        # 1. Encoder self-attention using x as query, key, and value. Output shape: (B, L, hidden_size)                   
-            
+        # 1. Encoder self-attention using x as query, key, and value. Output shape: (B, L, hidden_size)                           
         attention_output = self.self_attention( query=x, key=x, value=x, attention_mask=source_mask, ) 
 
-        # 2. First residual connection and layer normalization: LayerNorm(x + Dropout(SelfAttention(x)))
-        
+        # 2. First residual connection and layer normalization: LayerNorm(x + Dropout(SelfAttention(x)))        
         x = self.attention_norm( x + self.attention_dropout(attention_output) )
 
-        # 3. Position-wise feed-forward network
-        
+        # 3. Position-wise feed-forward network        
         feed_forward_output = self.feed_forward(x)
 
-        # 4. Second residual connection and layer normalization : LayerNorm(x + Dropout(FeedForward(x)))
-        
+        # 4. Second residual connection and layer normalization : LayerNorm(x + Dropout(FeedForward(x)))        
         x = self.feed_forward_norm( x + self.feed_forward_dropout(feed_forward_output) )
 
         return x
@@ -176,7 +166,6 @@ class Encoder(nn.Module):
         if vocabulary_size <= 0:
             raise ValueError( "vocabulary_size must be positive, " f"got {vocabulary_size}" )
                 
-
         if hidden_size <= 0: 
             raise ValueError( f"hidden_size must be positive, got {hidden_size}" )
 
@@ -255,7 +244,7 @@ class Encoder(nn.Module):
                 self.padding_token_id
             )
 
-        expected_mask_shape = ( batch_size, source_length, )
+        expected_mask_shape = (batch_size, source_length, )
 
         if source_mask.shape != expected_mask_shape:
             raise ValueError( "source_mask must have shape " f"{expected_mask_shape}, " f"but received {tuple(source_mask.shape)}" )
