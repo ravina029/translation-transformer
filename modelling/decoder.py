@@ -104,16 +104,10 @@ class DecoderLayer(nn.Module):
         if encoder_output.device != x.device:
             raise ValueError( "x and encoder_output must be on the same device" )
 
-        target_mask = target_mask.to(
-            device=x.device,
-            dtype=torch.bool,
-        )
+        target_mask = target_mask.to( device=x.device, dtype=torch.bool, )
 
-        source_mask = source_mask.to(
-            device=x.device,
-            dtype=torch.bool,
-)
-
+        source_mask = source_mask.to( device=x.device, dtype=torch.bool, )
+                
         if target_mask.shape != (batch_size, target_length):
             raise ValueError( "target_mask must have shape " f"({batch_size}, {target_length}), " f"but received {tuple(target_mask.shape)}" )
 
@@ -122,24 +116,16 @@ class DecoderLayer(nn.Module):
 
         # 1. Causal decoder self-attention.
         # The target padding mask blocks padded key positions. mask_future=True internally blocks future positions.
-        self_attention_output = self.self_attention(
-            query=x,
-            key=x,
-            value=x,
-            attention_mask=target_mask,
-        )
 
+        self_attention_output = self.self_attention( query=x, key=x, value=x, attention_mask=target_mask, )
         x = self.self_attention_norm( x+ self.self_attention_dropout( self_attention_output ) )
 
         # 2. Encoder-decoder cross-attention.
         # Queries come from the decoder. Keys and values come from the encoder output.
-        cross_attention_output = self.cross_attention(
-            query=x,
-            key=encoder_output,
-            value=encoder_output,
-            attention_mask=source_mask,
-        )
 
+        cross_attention_output = self.cross_attention( query=x, key=encoder_output,
+                            value=encoder_output, attention_mask=source_mask, )
+                                            
         x = self.cross_attention_norm( x + self.cross_attention_dropout( cross_attention_output  ) )
 
         # 3. Position-wise feed-forward network.
@@ -208,9 +194,7 @@ class Decoder(nn.Module):
         self.token_embedding = nn.Embedding( num_embeddings=vocabulary_size, embedding_dim=hidden_size,
                             padding_idx=padding_token_id, )
 
-
         self.positional_encoding = PositionalEncoding( hidden_size=hidden_size, max_length=max_length, dropout=dropout, )
-
 
         self.layers = nn.ModuleList(
             [
