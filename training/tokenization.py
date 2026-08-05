@@ -41,7 +41,7 @@ def tokenize_sentences(
     Tokenize and dynamically right-pad a batch of sentences.
     """
     if isinstance(sentences, str):
-        raise TypeError( "sentences must be a sequence of strings, ""not one string" )
+        raise TypeError( "sentences must be a sequence of strings, " "not one string" )
 
     if len(sentences) == 0:
         raise ValueError( "sentences must contain at least one sentence" )
