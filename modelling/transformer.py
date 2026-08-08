@@ -6,10 +6,11 @@ from modelling.encoder import Encoder
 
 class Transformer(nn.Module):
     """
-    Complete encoder-decoder Transformer where The model:
-    1. The model encode the source sequence;
-    2. decode the target token prefix using causal self attention;
-    3. projects each decoder representation to target-vocabulary logits.
+    Complete encoder-decoder Transformer where:
+
+    1. The model encodes the source sequence.
+    2. The model decodes the target-token prefix using causal self-attention.
+    3. The model projects each decoder representation to target-vocabulary logits.
     """
     def __init__(self,
         source_vocabulary_size: int,
@@ -70,7 +71,6 @@ class Transformer(nn.Module):
         )
 
         # Converts every decoder hidden vector of size hidden_size into one score for every token in the target vocabulary.
-
         self.output_projection = nn.Linear(
             in_features = hidden_size,
             out_features = target_vocabulary_size,
@@ -78,10 +78,8 @@ class Transformer(nn.Module):
         )
 
         # Optional parameter sharing between the target-token embedding and the output projection.
-
         if tie_target_embedding_and_output:
             self.output_projection.weight = self.decoder.token_embedding.weight
-
 
     def forward(
         self,
@@ -91,21 +89,15 @@ class Transformer(nn.Module):
         target_mask: Tensor | None = None,
     ) -> Tensor:
         """
-        Run the complete Transformer.
-        Returns: 
-        Raw target-vocabulary logits with shape: (batch_size, target_length, target_vocabulary_size)
-                
+        This will Run the complete Transformer.
+        Returns: Raw target-vocabulary logits with shape: (batch_size, target_length, target_vocabulary_size)           
         """
 
         if source_mask is None:
-            source_mask = source_token_ids.ne(
-                self.source_padding_token_id
-            )
+            source_mask = source_token_ids.ne( self.source_padding_token_id )
 
         if target_mask is None:
-            target_mask = target_token_ids.ne(
-                self.target_padding_token_id
-            )
+            target_mask = target_token_ids.ne( self.target_padding_token_id )
 
         encoder_output = self.encoder(
             source_token_ids=source_token_ids,
