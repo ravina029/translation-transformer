@@ -6,6 +6,7 @@ from typing import Optional
 
 class Attention(nn.Module):
     def __init__(self, mask_future: bool = False) -> None:
+        
         super().__init__()
         self.mask_future = mask_future
         self.softmax = nn.Softmax(dim=-1)
@@ -73,16 +74,12 @@ class Attention(nn.Module):
 
 
 # Multihead attention implementation
-
-
 class MultiHeadAttention(nn.Module):
     """
-    Multi-head scaled dot-product attention.
-        Mask convention required by the tests:
-            1 = valid key/value position
-            0 = blocked key/value position
+    Multi-head scaled dot-product attention. Mask convention required by the tests:
+        1 = valid key/value position
+        0 = blocked key/value position
     """
-
     def __init__(
         self,
         hidden_size: int,
