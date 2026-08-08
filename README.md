@@ -5,27 +5,28 @@ A PyTorch implementation of the Transformer architecture from
 
 ## Status
 
-Implemented:
+Implemented and tested:
 
 - scaled dot-product and multi-head attention;
 - sinusoidal positional encoding;
 - Transformer encoder and decoder;
 - complete encoder-decoder wrapper;
 - target-vocabulary output projection;
-- shared German-English tokenizer with truncation and dynamic right padding.
+- German-English tokenization with truncation and dynamic right padding.
 
 In progress:
 
 - WMT17 data loading and preprocessing;
 - batching and target shifting;
-- training, validation, and inference;
+- training and validation;
+- translation inference;
 - command-line interface.
 
 ## Project structure
 
 ```text
 modelling/   Transformer components
-training/    Tokenization and training pipeline
+training/    Tokenization, data processing, and training pipeline
 tests/       Unit and integration tests
 outputs/     Checkpoints, logs, and translations
 ```
@@ -47,18 +48,13 @@ multiple attention heads.
 
 ### Positional encoding
 
-Uses fixed sinusoidal encodings with sine and cosine functions across embedding
-dimensions.
+Uses fixed sinusoidal positional encodings across embedding dimensions.
 
 ### Encoder
 
-Processes source token IDs using:
-
-- scaled token embeddings;
-- positional encoding;
-- bidirectional self-attention;
-- feed-forward networks;
-- residual connections and post-layer normalization.
+Processes source token IDs using token embeddings, positional encoding,
+bidirectional self-attention, feed-forward networks, residual connections,
+and post-layer normalization.
 
 ```text
 Input:  (batch_size, source_length)
@@ -67,15 +63,11 @@ Output: (batch_size, source_length, hidden_size)
 
 ### Decoder
 
-Processes target prefixes using:
+Processes target prefixes using causal self-attention, cross-attention over
+encoder outputs, feed-forward networks, residual connections, and
+post-layer normalization.
 
-- causal self-attention;
-- cross-attention over encoder outputs;
-- source and target padding masks;
-- feed-forward networks;
-- residual connections and post-layer normalization.
-
-Target sequences must use right padding.
+Target sequences use right padding.
 
 ```text
 Input:  (batch_size, target_length)
@@ -88,8 +80,7 @@ Connects the encoder and decoder and projects decoder representations to raw
 target-vocabulary logits.
 
 ```text
-Output:
-(batch_size, target_length, target_vocabulary_size)
+Output: (batch_size, target_length, target_vocabulary_size)
 ```
 
 ### Tokenization
@@ -97,14 +88,15 @@ Output:
 Uses the `facebook/bart-base` tokenizer without loading pretrained model
 weights.
 
-It provides:
+Supports:
 
 - shared German-English subword tokenization;
 - automatic BOS and EOS tokens;
 - PyTorch token-ID tensors;
-- truncation;
+- sequence truncation;
 - dynamic right padding;
-- attention masks.
+- attention masks;
+- input validation.
 
 ## Tests
 
@@ -113,18 +105,13 @@ Run all tests:
 ```bash
 python -m pytest tests/ -v
 ```
-
-Current result:
-
-```text
-34 passed
-```
+35 passed
 
 ## Next steps
 
-1. Test the tokenization module.
-2. Load and preprocess a small WMT17 subset.
+1. Load and preprocess a small WMT17 German-English subset.
+2. Connect the dataset pipeline to tokenization.
 3. Implement batching and target shifting.
-4. Add padding-aware loss and training loops.
+4. Add padding-aware loss and training/validation loops.
 5. Implement checkpointing and greedy decoding.
 6. Add the command-line interface and training results.
