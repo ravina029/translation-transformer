@@ -9,25 +9,28 @@ Implemented and tested:
 
 - scaled dot-product and multi-head attention;
 - sinusoidal positional encoding;
-- Transformer encoder and decoder;
-- complete encoder-decoder wrapper;
+- Transformer encoder, decoder, and full encoder-decoder wrapper;
 - target-vocabulary output projection;
-- German-English tokenization with truncation and dynamic right padding;
-- WMT17 German-English data loading and preprocessing.
+- German-English tokenization;
+- WMT17 loading and preprocessing;
+- batch preparation and target shifting;
+- end-to-end forward pass;
+- padding-aware cross-entropy loss;
+- backpropagation and Adam parameter updates.
 
 In progress:
 
-- dataset-to-tokenizer integration;
-- batching and target shifting;
-- training and validation;
-- translation inference;
-- command-line interface.
+- multi-epoch training and validation;
+- checkpointing;
+- greedy decoding;
+- command-line interface;
+- final training statistics.
 
 ## Project structure
 
 ```text
 modelling/   Transformer components
-training/    Tokenization, data processing, and training pipeline
+training/    Data, tokenization, batching, and training pipeline
 tests/       Unit and integration tests
 outputs/     Checkpoints, logs, and translations
 ```
@@ -40,7 +43,7 @@ source .tvenv/bin/activate
 pip install -r requirements.txt
 ```
 
-## Model architecture
+## Architecture
 
 ### Attention
 
@@ -49,72 +52,86 @@ multiple attention heads.
 
 ### Positional encoding
 
-Uses fixed sinusoidal positional encodings across embedding dimensions.
+Uses fixed sinusoidal positional encodings.
 
 ### Encoder
-
-Processes source token IDs using token embeddings, positional encoding,
-bidirectional self-attention, feed-forward networks, residual connections,
-and post-layer normalization.
 
 ```text
 Input:  (batch_size, source_length)
 Output: (batch_size, source_length, hidden_size)
 ```
 
+Uses token embeddings, positional encoding, bidirectional self-attention,
+feed-forward layers, residual connections, and post-layer normalization.
+
 ### Decoder
-
-Processes target prefixes using causal self-attention, cross-attention over
-encoder outputs, feed-forward networks, residual connections, and
-post-layer normalization.
-
-Target sequences use right padding.
 
 ```text
 Input:  (batch_size, target_length)
 Output: (batch_size, target_length, hidden_size)
 ```
 
-### Transformer wrapper
+Uses causal self-attention, encoder-decoder cross-attention, feed-forward
+layers, residual connections, and post-layer normalization.
 
-Connects the encoder and decoder and projects decoder representations to raw
-target-vocabulary logits.
+### Transformer
+
+Projects decoder outputs to:
 
 ```text
-Output: (batch_size, target_length, target_vocabulary_size)
+(batch_size, target_length, target_vocabulary_size)
 ```
 
-### Tokenization
+## Data pipeline
 
-Uses the `facebook/bart-base` tokenizer without loading pretrained model
-weights.
+Uses WMT17 German-English sentence pairs with minimal whitespace preprocessing.
 
-Supports:
+The `facebook/bart-base` tokenizer is used without pretrained model weights for:
 
-- shared German-English subword tokenization;
-- automatic BOS and EOS tokens;
-- PyTorch token-ID tensors;
-- sequence truncation;
+- shared subword tokenization;
+- BOS/EOS tokens;
+- truncation;
 - dynamic right padding;
-- attention masks;
-- input validation.
+- attention masks.
 
-### Data loading and preprocessing
+Target sequences are shifted for autoregressive training:
 
-Loads German-English sentence pairs from the WMT17 dataset.
+```text
+Target:        <BOS> I like apples <EOS>
+Decoder input: <BOS> I like apples
+Labels:        I like apples <EOS>
+```
 
-The data pipeline:
+## Verified end-to-end pipeline
 
-- supports train, validation, and test splits;
-- streams examples from the dataset;
-- extracts aligned German-English translation pairs;
-- validates sentence pairs;
-- removes empty or malformed examples;
-- normalizes leading, trailing, and repeated whitespace;
-- supports small configurable subsets for development and testing.
+```text
+WMT17
+  ↓
+preprocessing
+  ↓
+tokenization
+  ↓
+batch preparation
+  ↓
+target shifting
+  ↓
+Transformer
+  ↓
+loss
+  ↓
+backpropagation
+  ↓
+parameter update
+```
 
-Text preprocessing is intentionally minimal. Punctuation, capitalization,
-German characters, and sentence content are preserved for tokenization.
+Example forward-pass output:
+
+```text
+source_token_ids:  torch.Size([4, 90])
+decoder_input_ids: torch.Size([4, 42])
+labels:            torch.Size([4, 42])
+logits:            torch.Size([4, 42, 50265])
+```
 
 ## Tests
 
@@ -123,18 +140,20 @@ Run all tests:
 ```bash
 python -m pytest tests/ -v
 ```
+all 49 tests are passed 
 
-Current result:
+Additional checks:
 
-```text
-UPDATE_AFTER_RUNNING_FULL_TEST_SUITE
+```bash
+python -m training.smoke_test
+python -m training.train_step
 ```
 
 ## Next steps
 
-1. Connect WMT17 data loading to the tokenization pipeline.
-2. Implement batch preparation and target shifting.
-3. Pass a real WMT17 batch through the Transformer.
-4. Add padding-aware loss and training/validation loops.
-5. Implement checkpointing and greedy decoding.
-6. Add the command-line interface and training results.
+1. Implement training and validation loops.
+2. Train for multiple epochs and record losses.
+3. Add checkpoint saving and loading.
+4. Implement greedy decoding.
+5. Add the command-line interface.
+6. Finalize tests and training results.
