@@ -12,11 +12,12 @@ Implemented and tested:
 - Transformer encoder and decoder;
 - complete encoder-decoder wrapper;
 - target-vocabulary output projection;
-- German-English tokenization with truncation and dynamic right padding.
+- German-English tokenization with truncation and dynamic right padding;
+- WMT17 German-English data loading and preprocessing.
 
 In progress:
 
-- WMT17 data loading and preprocessing;
+- dataset-to-tokenizer integration;
 - batching and target shifting;
 - training and validation;
 - translation inference;
@@ -98,6 +99,23 @@ Supports:
 - attention masks;
 - input validation.
 
+### Data loading and preprocessing
+
+Loads German-English sentence pairs from the WMT17 dataset.
+
+The data pipeline:
+
+- supports train, validation, and test splits;
+- streams examples from the dataset;
+- extracts aligned German-English translation pairs;
+- validates sentence pairs;
+- removes empty or malformed examples;
+- normalizes leading, trailing, and repeated whitespace;
+- supports small configurable subsets for development and testing.
+
+Text preprocessing is intentionally minimal. Punctuation, capitalization,
+German characters, and sentence content are preserved for tokenization.
+
 ## Tests
 
 Run all tests:
@@ -105,13 +123,18 @@ Run all tests:
 ```bash
 python -m pytest tests/ -v
 ```
-35 passed
+
+Current result:
+
+```text
+UPDATE_AFTER_RUNNING_FULL_TEST_SUITE
+```
 
 ## Next steps
 
-1. Load and preprocess a small WMT17 German-English subset.
-2. Connect the dataset pipeline to tokenization.
-3. Implement batching and target shifting.
+1. Connect WMT17 data loading to the tokenization pipeline.
+2. Implement batch preparation and target shifting.
+3. Pass a real WMT17 batch through the Transformer.
 4. Add padding-aware loss and training/validation loops.
 5. Implement checkpointing and greedy decoding.
 6. Add the command-line interface and training results.
