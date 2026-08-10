@@ -13,18 +13,18 @@ Implemented and tested:
 - target-vocabulary output projection;
 - German-English tokenization;
 - WMT17 loading and preprocessing;
-- batch preparation and target shifting;
-- end-to-end forward pass;
+- mini-batch preparation and target shifting;
+- end-to-end forward and backward passes;
 - padding-aware cross-entropy loss;
-- backpropagation and Adam parameter updates.
+- Adam optimization;
+- multi-epoch training and validation.
 
 In progress:
 
-- multi-epoch training and validation;
-- checkpointing;
+- checkpoint saving and loading;
 - greedy decoding;
 - command-line interface;
-- final training statistics.
+- final training experiments and statistics.
 
 ## Project structure
 
@@ -47,8 +47,8 @@ pip install -r requirements.txt
 
 ### Attention
 
-Supports self-attention, causal attention, cross-attention, padding masks, and
-multiple attention heads.
+Supports self-attention, causal attention, cross-attention, padding masks,
+and multiple attention heads.
 
 ### Positional encoding
 
@@ -84,17 +84,11 @@ Projects decoder outputs to:
 
 ## Data pipeline
 
-Uses WMT17 German-English sentence pairs with minimal whitespace preprocessing.
+WMT17 German-English sentence pairs are minimally preprocessed, tokenized using
+`facebook/bart-base` without pretrained model weights, dynamically right-padded,
+and converted to attention masks.
 
-The `facebook/bart-base` tokenizer is used without pretrained model weights for:
-
-- shared subword tokenization;
-- BOS/EOS tokens;
-- truncation;
-- dynamic right padding;
-- attention masks.
-
-Target sequences are shifted for autoregressive training:
+Targets are shifted for autoregressive training:
 
 ```text
 Target:        <BOS> I like apples <EOS>
@@ -102,35 +96,31 @@ Decoder input: <BOS> I like apples
 Labels:        I like apples <EOS>
 ```
 
-## Verified end-to-end pipeline
+## Training
+
+The training pipeline supports:
+
+- aligned mini-batch creation with optional shuffling;
+- automatic CUDA, Apple MPS, or CPU selection;
+- padding-aware cross-entropy loss;
+- backpropagation and Adam optimization;
+- separate training and validation passes.
+
+Initial development run:
 
 ```text
-WMT17
-  ↓
-preprocessing
-  ↓
-tokenization
-  ↓
-batch preparation
-  ↓
-target shifting
-  ↓
-Transformer
-  ↓
-loss
-  ↓
-backpropagation
-  ↓
-parameter update
-```
+Training examples:   100
+Validation examples: 20
+Batch size:           4
+Epochs:               2
 
-Example forward-pass output:
+Epoch 1
+Training loss:   10.9506
+Validation loss: 10.8271
 
-```text
-source_token_ids:  torch.Size([4, 90])
-decoder_input_ids: torch.Size([4, 42])
-labels:            torch.Size([4, 42])
-logits:            torch.Size([4, 42, 50265])
+Epoch 2
+Training loss:   10.6386
+Validation loss: 10.6141
 ```
 
 ## Tests
@@ -140,20 +130,25 @@ Run all tests:
 ```bash
 python -m pytest tests/ -v
 ```
-all 49 tests are passed 
 
-Additional checks:
+Current result:
+
+```text
+49 passed
+```
+
+Additional end-to-end checks:
 
 ```bash
 python -m training.smoke_test
 python -m training.train_step
+python -m training.train
 ```
 
 ## Next steps
 
-1. Implement training and validation loops.
-2. Train for multiple epochs and record losses.
-3. Add checkpoint saving and loading.
-4. Implement greedy decoding.
-5. Add the command-line interface.
-6. Finalize tests and training results.
+1. Add checkpoint saving and loading.
+2. Implement greedy decoding.
+3. Add the command-line interface.
+4. Run larger training experiments and record final statistics.
+5. Finalize integration tests and documentation.
