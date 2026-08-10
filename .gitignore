@@ -38,5 +38,7 @@ checkpoints/
 *.pth
 *.ckpt
 
+outputs/checkpoints/*.pt
+
 # Keep the outputs directory visible
 !outputs/.gitkeep

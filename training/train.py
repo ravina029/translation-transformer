@@ -1,19 +1,23 @@
+import time
 import random 
 import torch 
 from torch import nn
 from transformers import PreTrainedTokenizerBase
 
 from modelling.transformer import Transformer
-from training.batching import create_minibatches,prepare_translation_batch
+from training.batching import ( create_minibatches,prepare_translation_batch, )
 from training.data import load_translation_pairs
 from training.tokenization import build_tokenizer
 
+from training.checkpoint import save_checkpoint
+CHECKPOINT_PATH = "outputs/checkpoints/best_model.pt"
+
 #Development configuration
-TRAIN_SIZE = 100
-VALIDATION_SIZE = 20
+TRAIN_SIZE = 1000
+VALIDATION_SIZE = 200
 BATCH_SIZE = 4
 MAX_LENGTH = 128
-NUMBER_OF_EPOCHS = 2
+NUMBER_OF_EPOCHS = 5
 HIDDEN_SIZE = 128
 NUMBER_OF_HEADS = 4
 FEED_FORWARD_SIZE = 256
@@ -183,8 +187,13 @@ def main() -> None:
     optimizer = torch.optim.Adam( model.parameters(), lr=LEARNING_RATE, )
 
     print("\nStarting training")
+    
+    training_start_time = time.perf_counter()
+    best_validation_loss = float("inf")
 
-    for epoch in range( 1, NUMBER_OF_EPOCHS + 1, ):
+    for epoch in range(1, NUMBER_OF_EPOCHS + 1):
+        epoch_start_time = time.perf_counter()
+
         training_loss = train_one_epoch(
             model=model,
             tokenizer=tokenizer,
@@ -204,11 +213,37 @@ def main() -> None:
             device=device,
         )
 
-        print( f"\nEpoch {epoch}/{NUMBER_OF_EPOCHS}" )
-        print( f"Training loss:   {training_loss:.4f}" )
-        print( f"Validation loss: {validation_loss:.4f}" )
+        epoch_time = time.perf_counter() - epoch_start_time
+
+        print(f"\nEpoch {epoch}/{NUMBER_OF_EPOCHS}")
+        print(f"Training loss:   {training_loss:.4f}")
+        print(f"Validation loss: {validation_loss:.4f}")
+        print(f"Epoch time:      {epoch_time:.2f} seconds")
+
+        if validation_loss < best_validation_loss:
+            best_validation_loss = validation_loss
+
+            save_checkpoint(
+                path=CHECKPOINT_PATH,
+                model=model,
+                optimizer=optimizer,
+                epoch=epoch,
+                training_loss=training_loss,
+                validation_loss=validation_loss,
+            )
+
+            print(
+                f"Saved new best checkpoint "
+                f"with validation loss {validation_loss:.4f}"
+            )
+
+    total_time = time.perf_counter() - training_start_time
 
     print("\nTraining completed.")
+    print(f"Best validation loss: {best_validation_loss:.4f}")
+    print(f"Checkpoint saved to: {CHECKPOINT_PATH}")
+    print(f"Total training time: {total_time / 60:.2f} minutes")
+
 
 if __name__ == "__main__":
     main()
