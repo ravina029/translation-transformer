@@ -1,8 +1,49 @@
+import random
 from collections.abc import Sequence
 from torch import Tensor
 from transformers import PreTrainedTokenizerBase
 from training.tokenization import tokenize_translation_batch
 
+
+def create_minibatches(
+    german_sentences: Sequence[str],
+    english_sentences: Sequence[str],
+    batch_size: int,
+    shuffle: bool = False,
+) -> list[tuple[list[str], list[str]]]:
+    """
+    Split aligned German-English sentence pairs into mini-batches.
+    """
+    if len(german_sentences) != len(english_sentences):
+        raise ValueError( "German and English datasets must contain " "the same number of sentences" )
+
+    if len(german_sentences) == 0:
+        raise ValueError("dataset must not be empty" )
+
+    if not isinstance(batch_size, int):
+        raise TypeError( "batch_size must be an integer" )
+
+    if batch_size <= 0:
+        raise ValueError( "batch_size must be positive" )
+
+    # Create indices so German-English pairs remain aligned.
+    indices = list(range(len(german_sentences)))
+
+    if shuffle:
+        random.shuffle(indices)
+
+    batches = []
+
+    for start in range( 0, len(indices),batch_size, ):
+        batch_indices = indices[ start:start + batch_size ]
+
+        german_batch = [ german_sentences[index] for index in batch_indices ]
+
+        english_batch = [ english_sentences[index] for index in batch_indices ]
+
+        batches.append(( german_batch, english_batch,))
+
+    return batches
 
 def prepare_translation_batch(
     tokenizer: PreTrainedTokenizerBase,
@@ -13,7 +54,6 @@ def prepare_translation_batch(
     """
     Tokenize a German-English batch and prepare model inputs and labels.
     """
-
     if len(german_sentences) != len(english_sentences):
         raise ValueError("German and English batches must contain " "the same number of sentences"  )
 
