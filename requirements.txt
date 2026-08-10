@@ -2,3 +2,5 @@ torch
 pytest
 numpy==2.4.6
 transformers
+
+datasets
