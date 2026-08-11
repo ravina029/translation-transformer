@@ -10,11 +10,10 @@ from training.data import load_translation_pairs
 from training.tokenization import build_tokenizer
 
 from training.checkpoint import save_checkpoint
-CHECKPOINT_PATH = "outputs/checkpoints/best_model.pt"
 
 #Development configuration
-TRAIN_SIZE = 1000
-VALIDATION_SIZE = 200
+TRAIN_SIZE = 5000
+VALIDATION_SIZE = 500
 BATCH_SIZE = 4
 MAX_LENGTH = 128
 NUMBER_OF_EPOCHS = 5
@@ -27,6 +26,8 @@ DROPOUT = 0.1
 
 LEARNING_RATE = 1e-4
 RANDOM_SEED = 42
+
+CHECKPOINT_PATH = ( "outputs/checkpoints/"  "transformer_train5000_val500.pt" )
 
 def get_device() -> torch.device:
     """
