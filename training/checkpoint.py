@@ -27,3 +27,37 @@ def save_checkpoint(
         },
         checkpoint_path,
     )
+
+def load_checkpoint(
+    path: str,
+    model: Transformer,
+    device: torch.device,
+    optimizer: torch.optim.Optimizer | None = None,
+) -> dict[str, int | float]:
+    """
+    Load a saved Transformer checkpoint. The optimizer is restored only when it is provided.
+    """
+    checkpoint_path = Path(path)
+
+    if not checkpoint_path.exists():
+        raise FileNotFoundError( f"checkpoint not found: {checkpoint_path}" )
+
+    checkpoint = torch.load(
+        checkpoint_path,
+        map_location=device,
+        weights_only=True,
+    )
+
+    model.load_state_dict( checkpoint["model_state_dict"] )
+    model.to(device)
+
+    if optimizer is not None:
+        optimizer.load_state_dict( checkpoint["optimizer_state_dict"] )
+
+    return {
+        "epoch": checkpoint["epoch"],
+        "training_loss": checkpoint["training_loss"],
+        "validation_loss": checkpoint["validation_loss"],
+    }
+
+
