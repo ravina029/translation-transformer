@@ -10,27 +10,26 @@ Implemented and tested:
 - scaled dot-product and multi-head attention;
 - sinusoidal positional encoding;
 - Transformer encoder, decoder, and full encoder-decoder wrapper;
-- target-vocabulary output projection;
 - German-English tokenization;
 - WMT17 loading and preprocessing;
 - mini-batch preparation and target shifting;
-- end-to-end forward and backward passes;
 - padding-aware cross-entropy loss;
-- Adam optimization;
-- multi-epoch training and validation.
+- backpropagation and Adam optimization;
+- multi-epoch training and validation;
+- best-validation checkpoint saving.
 
 In progress:
 
-- checkpoint saving and loading;
+- checkpoint loading;
 - greedy decoding;
 - command-line interface;
-- final training experiments and statistics.
+- final integration tests and evaluation.
 
 ## Project structure
 
 ```text
 modelling/   Transformer components
-training/    Data, tokenization, batching, and training pipeline
+training/    Data, tokenization, batching, training, and checkpointing
 tests/       Unit and integration tests
 outputs/     Checkpoints, logs, and translations
 ```
@@ -76,7 +75,7 @@ layers, residual connections, and post-layer normalization.
 
 ### Transformer
 
-Projects decoder outputs to:
+Projects decoder outputs to target-vocabulary logits:
 
 ```text
 (batch_size, target_length, target_vocabulary_size)
@@ -84,11 +83,11 @@ Projects decoder outputs to:
 
 ## Data pipeline
 
-WMT17 German-English sentence pairs are minimally preprocessed, tokenized using
-`facebook/bart-base` without pretrained model weights, dynamically right-padded,
-and converted to attention masks.
+WMT17 German-English sentence pairs are minimally preprocessed and tokenized
+using `facebook/bart-base` without loading pretrained model weights.
 
-Targets are shifted for autoregressive training:
+The pipeline supports dynamic right padding, attention masks, aligned
+mini-batches, and autoregressive target shifting:
 
 ```text
 Target:        <BOS> I like apples <EOS>
@@ -98,29 +97,47 @@ Labels:        I like apples <EOS>
 
 ## Training
 
-The training pipeline supports:
+Training supports CUDA, Apple MPS, and CPU, with separate training and
+validation passes and checkpointing based on validation loss.
 
-- aligned mini-batch creation with optional shuffling;
-- automatic CUDA, Apple MPS, or CPU selection;
-- padding-aware cross-entropy loss;
-- backpropagation and Adam optimization;
-- separate training and validation passes.
-
-Initial development run:
+Latest experiment:
 
 ```text
-Training examples:   100
-Validation examples: 20
+Training examples:   5000
+Validation examples: 500
 Batch size:           4
-Epochs:               2
+Epochs:               5
+Device:               Apple MPS
 
 Epoch 1
-Training loss:   10.9506
-Validation loss: 10.8271
+Training loss:   7.9270
+Validation loss: 8.2466
 
 Epoch 2
-Training loss:   10.6386
-Validation loss: 10.6141
+Training loss:   6.4890
+Validation loss: 8.4240
+
+Epoch 3
+Training loss:   6.4539
+Validation loss: 8.5801
+
+Epoch 4
+Training loss:   6.4209
+Validation loss: 8.7302
+
+Epoch 5
+Training loss:   6.3753
+Validation loss: 8.7075
+
+Best validation loss: 8.2466
+Best epoch:           1
+Total training time:  14.77 minutes
+```
+
+Best checkpoint:
+
+```text
+outputs/checkpoints/transformer_train5000_val500.pt
 ```
 
 ## Tests
@@ -147,8 +164,8 @@ python -m training.train
 
 ## Next steps
 
-1. Add checkpoint saving and loading.
+1. Load and verify the saved checkpoint.
 2. Implement greedy decoding.
-3. Add the command-line interface.
-4. Run larger training experiments and record final statistics.
+3. Add German-to-English inference.
+4. Add the command-line interface.
 5. Finalize integration tests and documentation.
