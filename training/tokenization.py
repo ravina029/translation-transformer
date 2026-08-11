@@ -4,11 +4,11 @@ from transformers import (BatchEncoding, PreTrainedTokenizerBase, AutoTokenizer,
 TOKENIZER_NAME = "facebook/bart-base"
 MAX_LENGTH = 128
 
-def build_tokenizer () -> PreTrainedTokenizerBase:
+def build_tokenizer (local_files_only: bool = False,) -> PreTrainedTokenizerBase:
     """
     Load the shared tokenizer for German and English text without loading the pretrained BART model.
     """
-    tokenizer= AutoTokenizer.from_pretrained(TOKENIZER_NAME)
+    tokenizer= AutoTokenizer.from_pretrained(TOKENIZER_NAME, local_files_only=local_files_only, )
 
     # in this project the decoder requires padding after the real tokens
     tokenizer.padding_side = "right"
