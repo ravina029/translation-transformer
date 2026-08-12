@@ -1,4 +1,4 @@
-# Virtual environment
+# Virtual environments
 .venv/
 venv/
 env/
@@ -9,11 +9,8 @@ __pycache__/
 *.py[cod]
 *$py.class
 .pytest_cache/
-__pycache__/
-*.pyc
 
 # Testing and coverage
-.pytest_cache/
 .coverage
 htmlcov/
 
@@ -30,15 +27,9 @@ htmlcov/
 .env
 .env.*
 
-
-# Model checkpoints and generated outputs
+# Generated outputs and model checkpoints
 outputs/*
-checkpoints/
+!outputs/.gitkeep
 *.pt
 *.pth
 *.ckpt
-
-outputs/checkpoints/*.pt
-
-# Keep the outputs directory visible
-!outputs/.gitkeep
