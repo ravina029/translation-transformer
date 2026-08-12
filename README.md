@@ -219,11 +219,13 @@ Run translation with:
 python translate.py "Wiederaufnahme der Sitzungsperiode"
 ```
 
-By default, the script loads:
+By default, the script looks for the following checkpoint:
 
 ```text
 outputs/checkpoints/transformer_train5000_val500.pt
 ```
+
+Checkpoint files are not included in the repository because of their size. Run the training command first to create a checkpoint, or provide an existing checkpoint with `--checkpoint`.
 
 A different checkpoint can be selected with:
 
