@@ -1,6 +1,7 @@
+import argparse
 import time
-import random 
-import torch 
+import random
+import torch
 from torch import nn
 from transformers import PreTrainedTokenizerBase
 
@@ -27,7 +28,28 @@ DROPOUT = 0.1
 LEARNING_RATE = 1e-4
 RANDOM_SEED = 42
 
-CHECKPOINT_PATH = ( "outputs/checkpoints/"  "transformer_train5000_val500.pt" )
+def parse_arguments() -> argparse.Namespace:
+    """
+    Parse command-line arguments for training.
+    """
+    parser = argparse.ArgumentParser( description="Train a small German-English Transformer on WMT17." )
+
+    parser.add_argument( "--train-size", type=int, default=TRAIN_SIZE,
+                        help=f"Number of training sentence pairs (default: {TRAIN_SIZE}).", )
+
+    parser.add_argument( "--validation-size", type=int, default=VALIDATION_SIZE,
+                        help=( "Number of validation sentence pairs " f"(default: {VALIDATION_SIZE})." ),)
+
+    parser.add_argument( "--batch-size", type=int, default=BATCH_SIZE,
+                        help=f"Mini-batch size (default: {BATCH_SIZE}).", )
+
+    parser.add_argument( "--epochs", type=int, default=NUMBER_OF_EPOCHS,
+                        help=f"Number of training epochs (default: {NUMBER_OF_EPOCHS}).", )
+
+    parser.add_argument( "--learning-rate", type=float, default=LEARNING_RATE,
+                        help=f"Adam learning rate (default: {LEARNING_RATE}).", )
+
+    return parser.parse_args()
 
 def get_device() -> torch.device:
     """
@@ -57,7 +79,10 @@ def train_one_epoch(
     english_sentences: list[str],
     criterion: nn.CrossEntropyLoss,
     optimizer: torch.optim.Optimizer,
-    device: torch.device, ) -> float:
+    device: torch.device,
+    batch_size: int,
+    max_length: int,
+    ) -> float:
     """
     Training the Transformer for one complete epoch.
     """
@@ -66,7 +91,7 @@ def train_one_epoch(
     batches = create_minibatches(
         german_sentences=german_sentences,
         english_sentences=english_sentences,
-        batch_size=BATCH_SIZE,
+        batch_size=batch_size,
         shuffle=True,
     )
 
@@ -77,7 +102,7 @@ def train_one_epoch(
             tokenizer=tokenizer,
             german_sentences=german_batch,
             english_sentences=english_batch,
-            max_length=MAX_LENGTH, )
+            max_length=max_length, )
 
         batch = move_batch_to_device( batch=batch, device=device,)
         optimizer.zero_grad( set_to_none=True )
@@ -106,7 +131,9 @@ def validate_one_epoch(
     german_sentences: list[str],
     english_sentences: list[str],
     criterion: nn.CrossEntropyLoss,
-    device: torch.device, ) -> float:
+    device: torch.device,
+    batch_size: int,
+    max_length: int, ) -> float:
     """
     Evaluate the Transformer on the validation subset.
     """
@@ -115,7 +142,7 @@ def validate_one_epoch(
     batches = create_minibatches(
         german_sentences=german_sentences,
         english_sentences=english_sentences,
-        batch_size=BATCH_SIZE,
+        batch_size=batch_size,
         shuffle=False, )
 
     total_loss = 0.0
@@ -126,7 +153,7 @@ def validate_one_epoch(
                 tokenizer=tokenizer,
                 german_sentences=german_batch,
                 english_sentences=english_batch,
-                max_length=MAX_LENGTH,
+                max_length=max_length,
             )
 
             batch = move_batch_to_device( batch=batch, device=device,)
@@ -150,6 +177,9 @@ def main() -> None:
     """
     Train and validate a small Transformer on WMT17.
     """
+    args = parse_arguments()
+    checkpoint_path = ( "outputs/checkpoints/" f"transformer_train{args.train_size}_val{args.validation_size}.pt")
+
     random.seed(RANDOM_SEED)
     torch.manual_seed(RANDOM_SEED)
 
@@ -161,10 +191,10 @@ def main() -> None:
         raise ValueError("tokenizer must define a padding token" )
 
     print("Loading training data...")
-    german_train, english_train = ( load_translation_pairs( split="train", subset_size=TRAIN_SIZE, ) )
+    german_train, english_train = ( load_translation_pairs( split="train", subset_size=args.train_size, ) )
 
     print("Loading validation data...")
-    german_validation, english_validation = ( load_translation_pairs( split="validation", subset_size=VALIDATION_SIZE, ) )
+    german_validation, english_validation = ( load_translation_pairs( split="validation", subset_size=args.validation_size, ) )
 
     vocabulary_size = len(tokenizer)
 
@@ -185,14 +215,14 @@ def main() -> None:
     model = model.to(device)
 
     criterion = nn.CrossEntropyLoss( ignore_index=tokenizer.pad_token_id, )
-    optimizer = torch.optim.Adam( model.parameters(), lr=LEARNING_RATE, )
+    optimizer = torch.optim.Adam( model.parameters(), lr=args.learning_rate, )
 
     print("\nStarting training")
-    
+
     training_start_time = time.perf_counter()
     best_validation_loss = float("inf")
 
-    for epoch in range(1, NUMBER_OF_EPOCHS + 1):
+    for epoch in range(1, args.epochs + 1):
         epoch_start_time = time.perf_counter()
 
         training_loss = train_one_epoch(
@@ -203,6 +233,8 @@ def main() -> None:
             criterion=criterion,
             optimizer=optimizer,
             device=device,
+            batch_size=args.batch_size,
+            max_length=MAX_LENGTH,
         )
 
         validation_loss = validate_one_epoch(
@@ -212,11 +244,13 @@ def main() -> None:
             english_sentences=english_validation,
             criterion=criterion,
             device=device,
+            batch_size=args.batch_size,
+            max_length=MAX_LENGTH,
         )
 
         epoch_time = time.perf_counter() - epoch_start_time
 
-        print(f"\nEpoch {epoch}/{NUMBER_OF_EPOCHS}")
+        print(f"\nEpoch {epoch}/{args.epochs}")
         print(f"Training loss:   {training_loss:.4f}")
         print(f"Validation loss: {validation_loss:.4f}")
         print(f"Epoch time:      {epoch_time:.2f} seconds")
@@ -225,7 +259,7 @@ def main() -> None:
             best_validation_loss = validation_loss
 
             save_checkpoint(
-                path=CHECKPOINT_PATH,
+                path=checkpoint_path,
                 model=model,
                 optimizer=optimizer,
                 epoch=epoch,
@@ -242,7 +276,7 @@ def main() -> None:
 
     print("\nTraining completed.")
     print(f"Best validation loss: {best_validation_loss:.4f}")
-    print(f"Checkpoint saved to: {CHECKPOINT_PATH}")
+    print(f"Checkpoint saved to: {checkpoint_path}")
     print(f"Total training time: {total_time / 60:.2f} minutes")
 
 
