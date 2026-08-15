@@ -6,9 +6,11 @@ from torch import nn
 from transformers import PreTrainedTokenizerBase
 
 from modelling.transformer import Transformer
-from training.batching import ( create_minibatches,prepare_translation_batch, )
+from training.batching import (create_minibatches,prepare_translation_batch, move_batch_to_device,)
 from training.data import load_translation_pairs
 from training.tokenization import build_tokenizer
+from training.evaluate import validate_one_epoch
+
 
 from training.checkpoint import save_checkpoint
 
@@ -63,14 +65,6 @@ def get_device() -> torch.device:
 
     return torch.device("cpu")
 
-def move_batch_to_device( batch: dict[str, torch.Tensor], device: torch.device, ) -> dict[str, torch.Tensor]:
-    """
-    Move all tensors in a prepared batch to the selected device.
-    """
-    return {
-        name: tensor.to(device)
-        for name, tensor in batch.items()
-    }
 
 def train_one_epoch(
     model: Transformer,
@@ -108,16 +102,16 @@ def train_one_epoch(
         optimizer.zero_grad( set_to_none=True )
 
         logits = model(
-            source_token_ids=batch[ "source_token_ids" ],
-            target_token_ids=batch[ "decoder_input_ids" ],
-            source_mask=batch[ "source_mask" ],
-            target_mask=batch[ "decoder_mask" ], )
+            source_token_ids=batch["source_token_ids"],
+            target_token_ids=batch["decoder_input_ids"],
+            source_mask=batch["source_mask"],
+            target_mask=batch["decoder_mask"], )
 
         loss = criterion( logits.reshape(-1, logits.size(-1), ),
             batch["labels"].reshape(-1), )
 
         if not torch.isfinite(loss):
-            raise ValueError( "training loss is not finite" )
+            raise ValueError("training loss is not finite")
 
         loss.backward()
         optimizer.step()
@@ -125,60 +119,13 @@ def train_one_epoch(
 
     return total_loss / len(batches)
 
-def validate_one_epoch(
-    model: Transformer,
-    tokenizer: PreTrainedTokenizerBase,
-    german_sentences: list[str],
-    english_sentences: list[str],
-    criterion: nn.CrossEntropyLoss,
-    device: torch.device,
-    batch_size: int,
-    max_length: int, ) -> float:
-    """
-    Evaluate the Transformer on the validation subset.
-    """
-    model.eval()
-
-    batches = create_minibatches(
-        german_sentences=german_sentences,
-        english_sentences=english_sentences,
-        batch_size=batch_size,
-        shuffle=False, )
-
-    total_loss = 0.0
-    with torch.no_grad():
-        for german_batch, english_batch in batches:
-
-            batch = prepare_translation_batch(
-                tokenizer=tokenizer,
-                german_sentences=german_batch,
-                english_sentences=english_batch,
-                max_length=max_length,
-            )
-
-            batch = move_batch_to_device( batch=batch, device=device,)
-            logits = model(
-                        source_token_ids=batch[ "source_token_ids" ],
-                        target_token_ids=batch[ "decoder_input_ids" ],
-                        source_mask=batch[ "source_mask" ],
-                        target_mask=batch[ "decoder_mask" ], )
-
-            loss = criterion( logits.reshape(-1, logits.size(-1), ),
-                        batch["labels"].reshape(-1), )
-
-            if not torch.isfinite(loss):
-                        raise ValueError( "validation loss is not finite" )
-
-            total_loss += loss.item()
-
-    return total_loss / len(batches)
 
 def main() -> None:
     """
     Train and validate a small Transformer on WMT17.
     """
     args = parse_arguments()
-    checkpoint_path = ( "outputs/checkpoints/" f"transformer_train{args.train_size}_val{args.validation_size}.pt")
+    checkpoint_path = ("outputs/checkpoints/" f"transformer_train{args.train_size}_val{args.validation_size}.pt")
 
     random.seed(RANDOM_SEED)
     torch.manual_seed(RANDOM_SEED)
@@ -188,13 +135,13 @@ def main() -> None:
 
     tokenizer = build_tokenizer()
     if tokenizer.pad_token_id is None:
-        raise ValueError("tokenizer must define a padding token" )
+        raise ValueError("tokenizer must define a padding token")
 
     print("Loading training data...")
-    german_train, english_train = ( load_translation_pairs( split="train", subset_size=args.train_size, ) )
+    german_train, english_train = (load_translation_pairs( split="train", subset_size=args.train_size, ) )
 
     print("Loading validation data...")
-    german_validation, english_validation = ( load_translation_pairs( split="validation", subset_size=args.validation_size, ) )
+    german_validation, english_validation = (load_translation_pairs( split="validation", subset_size=args.validation_size, ) )
 
     vocabulary_size = len(tokenizer)
 
@@ -214,8 +161,8 @@ def main() -> None:
 
     model = model.to(device)
 
-    criterion = nn.CrossEntropyLoss( ignore_index=tokenizer.pad_token_id, )
-    optimizer = torch.optim.Adam( model.parameters(), lr=args.learning_rate, )
+    criterion = nn.CrossEntropyLoss(ignore_index=tokenizer.pad_token_id, )
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate, )
 
     print("\nStarting training")
 

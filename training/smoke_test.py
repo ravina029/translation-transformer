@@ -23,18 +23,21 @@ def main() -> None:
 
     # Load a very small real WMT17 batch.
     german_sentences, english_sentences = (
-        load_translation_pairs( split="train", subset_size=BATCH_SIZE, )
+        load_translation_pairs(split="train", subset_size=BATCH_SIZE, )
     )
 
     # Convert raw sentences into model-ready tensors.
-    batch = prepare_translation_batch( tokenizer=tokenizer, german_sentences=german_sentences,
-        english_sentences=english_sentences, max_length=MAX_LENGTH, )
+    batch = prepare_translation_batch(
+        tokenizer=tokenizer, 
+        german_sentences=german_sentences,
+        english_sentences=english_sentences, 
+        max_length=MAX_LENGTH, )
 
     # same tokenizer is used for source and target languages.
     vocabulary_size = len(tokenizer)
 
     if tokenizer.pad_token_id is None:
-        raise ValueError("tokenizer must define a padding token" )
+        raise ValueError("tokenizer must define a padding token")
 
     # Using a small Transformer for the smoke test.
     model = Transformer(
@@ -63,9 +66,9 @@ def main() -> None:
             target_mask=batch["decoder_mask"],)
 
     print("\nInput shapes")
-    print( "source_token_ids:", batch["source_token_ids"].shape, )
-    print( "decoder_input_ids:", batch["decoder_input_ids"].shape, )
-    print( "labels:", batch["labels"].shape,)
+    print("source_token_ids:", batch["source_token_ids"].shape, )
+    print("decoder_input_ids:", batch["decoder_input_ids"].shape, )
+    print("labels:", batch["labels"].shape,)
     print("\nModel output")
     print("logits:", logits.shape)   
 
@@ -79,10 +82,7 @@ def main() -> None:
     assert torch.isfinite(logits).all()
 
     print("\nSmoke test passed.")
-    print("Real WMT17 data successfully passed " "through the Transformer." ) 
+    print("Real WMT17 data successfully passed " "through the Transformer.") 
 
 if __name__ == "__main__":
     main()
-
-
-

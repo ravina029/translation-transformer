@@ -1,4 +1,5 @@
 import random
+import torch
 from collections.abc import Sequence
 from torch import Tensor
 from transformers import PreTrainedTokenizerBase
@@ -44,6 +45,15 @@ def create_minibatches(
         batches.append(( german_batch, english_batch,))
 
     return batches
+
+def move_batch_to_device( batch: dict[str, torch.Tensor], device: torch.device, ) -> dict[str, torch.Tensor]:
+    """
+    Move all tensors in a prepared batch to the selected device.
+    """
+    return {
+        name: tensor.to(device)
+        for name, tensor in batch.items()
+    }
 
 def prepare_translation_batch(
     tokenizer: PreTrainedTokenizerBase,
