@@ -123,7 +123,8 @@ class EncoderLayer(nn.Module):
             raise ValueError( "x must have shape " "(batch_size, source_length, hidden_size)" )           
 
         if x.size(-1) != self.hidden_size:
-            raise ValueError( f"x must have hidden_size={self.hidden_size}, " f"but received {x.size(-1)}" )
+            raise ValueError( f"x must have hidden_size={self.hidden_size}, " 
+                             f"but received {x.size(-1)}" )
                             
         batch_size = x.size(0)
         source_length = x.size(1)
@@ -173,7 +174,8 @@ class Encoder(nn.Module):
             raise ValueError( "number_of_heads must be positive, " f"got {number_of_heads}" )
 
         if hidden_size % number_of_heads != 0:
-            raise ValueError( f"hidden_size ({hidden_size}) must be divisible by " f"number_of_heads ({number_of_heads})" )
+            raise ValueError( f"hidden_size ({hidden_size}) must be divisible by " 
+                             f"number_of_heads ({number_of_heads})" )
 
         if feed_forward_size <= 0:
             raise ValueError( "feed_forward_size must be positive, " f"got {feed_forward_size}"  )
@@ -188,7 +190,8 @@ class Encoder(nn.Module):
             raise ValueError( f"dropout must be in [0, 1), got {dropout}"  )
 
         if not 0 <= padding_token_id < vocabulary_size:
-            raise ValueError( "padding_token_id must be within the vocabulary: " f"expected a value from 0 to {vocabulary_size - 1}, " f"got {padding_token_id}" )
+            raise ValueError( "padding_token_id must be within the vocabulary: " 
+                             f"expected a value from 0 to {vocabulary_size - 1}, " f"got {padding_token_id}" )
 
         self.vocabulary_size = vocabulary_size
         self.hidden_size = hidden_size
@@ -226,17 +229,27 @@ class Encoder(nn.Module):
         """Encode source token IDs into contextual hidden states."""
 
         if source_token_ids.ndim != 2:
-            raise ValueError( "source_token_ids must have shape " "(batch_size, source_length)" )
+            raise ValueError( "source_token_ids must have shape " 
+                             "(batch_size, source_length)" )
 
         batch_size = source_token_ids.size(0)
         source_length = source_token_ids.size(1)
+
+        if source_length == 0:
+            raise ValueError( "source_token_ids must contain at least one token")
 
         if source_length > self.max_length:
             raise ValueError( f"source length {source_length} exceeds " f"max_length={self.max_length}" )
 
         # The embedding layer requires integer token IDs.
         if source_token_ids.dtype not in ( torch.int32, torch.int64, ):
-            raise TypeError( "source_token_ids must contain integer token IDs, " f"but received dtype={source_token_ids.dtype}" )
+            raise TypeError( "source_token_ids must contain integer token IDs, "
+                             f"but received dtype={source_token_ids.dtype}" )
+
+        if ((source_token_ids < 0).any() or 
+            (source_token_ids >= self.vocabulary_size).any()):
+            raise ValueError( "source_token_ids must be between " 
+                             f"0 and {self.vocabulary_size - 1}")
 
         # Automatically construct the source padding mask when the caller does not provide one.
         if source_mask is None:
@@ -247,10 +260,16 @@ class Encoder(nn.Module):
         expected_mask_shape = (batch_size, source_length, )
 
         if source_mask.shape != expected_mask_shape:
-            raise ValueError( "source_mask must have shape " f"{expected_mask_shape}, " f"but received {tuple(source_mask.shape)}" )
+            raise ValueError(
+                "source_mask must have shape "
+                f"{expected_mask_shape}, " 
+                f"but received {tuple(source_mask.shape)}" )
 
         # Convert the mask to Boolean and move it to the correct device.
         source_mask = source_mask.to( device=source_token_ids.device, dtype=torch.bool, )
+
+        if not source_mask.any(dim=1).all():
+            raise ValueError( "each source sequence must contain at least one valid token")
 
         # Convert source token IDs into embedding vectors: (B, L) -> (B, L, hidden_size)
         x = self.token_embedding(source_token_ids)

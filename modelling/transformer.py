@@ -30,19 +30,19 @@ class Transformer(nn.Module):
         super().__init__()
 
         if source_vocabulary_size <= 0:
-            raise ValueError( "source_vocabulary_size must be positive, " f"got {source_vocabulary_size}" )
+            raise ValueError( f"source_vocabulary_size must be positive, got {source_vocabulary_size}" )
         
         if target_vocabulary_size <= 0:
-            raise ValueError( "target_vocabulary_size must be positive, " f"got {target_vocabulary_size}" )
+            raise ValueError( f"target_vocabulary_size must be positive, got {target_vocabulary_size}" )
 
         if hidden_size <= 0:
-            raise ValueError("hidden_size must be positive ", f"got {hidden_size}")
+            raise ValueError( f"hidden_size must be positive, got {hidden_size}" )
 
         if not 0 <= source_padding_token_id < source_vocabulary_size :
-            raise ValueError("source_padding_token_id be inside the source vocabulary size")
+            raise ValueError( f"source_padding_token_id must be inside the source vocabulary size, got {source_padding_token_id}" )
 
         if not 0 <= target_padding_token_id < target_vocabulary_size:
-            raise ValueError( "target_padding_token_id must be inside the target vocabulary" )
+            raise ValueError( f"target_padding_token_id must be inside the target vocabulary, got {target_padding_token_id}" )
 
         self.source_padding_token_id = source_padding_token_id
         self.target_padding_token_id = target_padding_token_id
