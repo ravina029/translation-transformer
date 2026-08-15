@@ -15,7 +15,7 @@ def save_checkpoint(
     """
     checkpoint_path = Path(path)
 
-    checkpoint_path.parent.mkdir( parents=True, exist_ok=True, )
+    checkpoint_path.parent.mkdir(parents=True, exist_ok=True, )
 
     torch.save(
         {
@@ -40,7 +40,7 @@ def load_checkpoint(
     checkpoint_path = Path(path)
 
     if not checkpoint_path.exists():
-        raise FileNotFoundError( f"checkpoint not found: {checkpoint_path}" )
+        raise FileNotFoundError(f"checkpoint not found: {checkpoint_path}" )
 
     checkpoint = torch.load(
         checkpoint_path,
@@ -48,11 +48,11 @@ def load_checkpoint(
         weights_only=True,
     )
 
-    model.load_state_dict( checkpoint["model_state_dict"] )
+    model.load_state_dict(checkpoint["model_state_dict"])
     model.to(device)
 
     if optimizer is not None:
-        optimizer.load_state_dict( checkpoint["optimizer_state_dict"] )
+        optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
 
     return {
         "epoch": checkpoint["epoch"],
