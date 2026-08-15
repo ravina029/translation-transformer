@@ -13,7 +13,7 @@ The project focuses on implementing, debugging, training, and running a Transfor
 * Transformer encoder and decoder
 * Encoder-decoder cross-attention
 * WMT17 German-English data loading
-* `facebook/bart-base` tokenizer without pretrained model weights
+* `facebook/bart-base` tokenizer for text-to-token conversion, without pretrained BART model weights
 * Dynamic right padding and autoregressive target shifting
 * Padding-aware cross-entropy loss
 * Adam optimization
@@ -29,7 +29,7 @@ The project focuses on implementing, debugging, training, and running a Transfor
 ```text
 translation-transformer/
 ├── modelling/          # Transformer architecture components
-├── training/           # Data, batching, training, checkpointing, and inference
+├── training/           # Data, tokenization, batching, training, validation, checkpointing, and inference
 ├── tests/              # Unit and integration tests
 ├── outputs/
 │   └── checkpoints/    # Saved model checkpoints
@@ -91,7 +91,7 @@ Tokenization uses:
 facebook/bart-base
 ```
 
-Only the tokenizer is used; no pretrained BART model weights are loaded.
+Only the pretrained BART tokenizer is used for text-to-token conversion. No pretrained BART model weights are loaded. The Transformer architecture and all model parameters are implemented and trained from scratch.
 
 ```text
 Vocabulary size: 50265
@@ -191,6 +191,8 @@ Best epoch:           1
 Total training time:  14.77 minutes
 ```
 
+Validation loss was lowest after the first epoch and increased during later epochs while training loss continued to decrease, indicating that this small development configuration begins to overfit quickly.
+
 Checkpoint files are excluded from version control because of their size.
 
 ## Checkpointing
@@ -206,6 +208,8 @@ A checkpoint contains:
 * validation loss
 
 Saved checkpoints can be loaded later for inference or continued experimentation.
+
+When loading a checkpoint, the Transformer must be constructed using the same architecture and tokenizer vocabulary that were used during training.
 
 ## Translation
 
@@ -261,18 +265,20 @@ The tests cover:
 * Transformer output shapes
 * loss computation
 * backward propagation
-* training behavior
 * greedy autoregressive decoding
 
-Additional pipeline checks can be run with:
+Additional end-to-end pipeline validation can be run with:
 
 ```bash
 python -m training.smoke_test
-python -m training.train_step
 ```
+
+The smoke test loads a small real WMT17 batch, prepares the model inputs, runs a complete Transformer forward pass, and verifies the output shape and numerical finiteness.
 
 ## Limitations
 
 The model is intentionally small and is trained from scratch on a limited subset of WMT17 so that training remains feasible on local hardware.
 
-Translation quality is therefore limited. The purpose of the project is to demonstrate correct Transformer implementation, masking, batching, training, debugging, checkpointing, and autoregressive inference rather than competitive machine-translation performance.
+The shared BART tokenizer has a relatively large vocabulary compared with the size of the training subset, which further limits the translation quality achievable with this development configuration.
+
+Translation quality is therefore limited. The purpose of the project is to demonstrate correct Transformer implementation, masking, batching, training, validation, checkpointing, and autoregressive inference rather than competitive machine-translation performance.
