@@ -2,7 +2,7 @@ from collections.abc import Sequence
 from transformers import (BatchEncoding, PreTrainedTokenizerBase, AutoTokenizer, )
 
 TOKENIZER_NAME = "facebook/bart-base"
-MAX_LENGTH = 128
+DEFAULT_MAX_LENGTH = 128
 
 def build_tokenizer (local_files_only: bool = False,) -> PreTrainedTokenizerBase:
     """
@@ -35,7 +35,7 @@ def build_tokenizer (local_files_only: bool = False,) -> PreTrainedTokenizerBase
 def tokenize_sentences(
         tokenizer: PreTrainedTokenizerBase,
         sentences: Sequence[str],
-        max_length: int = MAX_LENGTH, 
+        max_length: int = DEFAULT_MAX_LENGTH, 
         ) -> BatchEncoding:
     """
     Tokenize and dynamically right-pad a batch of sentences.
@@ -73,7 +73,7 @@ def tokenize_translation_batch(
     tokenizer: PreTrainedTokenizerBase,
     german_sentences: Sequence[str],
     english_sentences: Sequence[str],
-    max_length: int = MAX_LENGTH,
+    max_length: int = DEFAULT_MAX_LENGTH,
 ) -> tuple[BatchEncoding, BatchEncoding]:
     """
     Tokenize one German-English translation batch.

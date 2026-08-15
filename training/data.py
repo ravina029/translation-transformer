@@ -2,11 +2,6 @@ from datasets import load_dataset
 
 DATASET_NAME= "wmt/wmt17"
 DATASET_CONFIG= "de-en"
-
-TRAIN_SIZE= 1000
-VALIDATION_SIZE= 200
-TEST_SIZE= 200
-
 VALID_SPLITS= {"train", "validation", "test"}
 
 def preprocess_sentence(sentence:str) -> str:
@@ -94,11 +89,4 @@ def load_translation_pairs(
             f"{split!r}, but found only " f"{len(german_sentences)}" )
 
     return german_sentences, english_sentences
-
-
-
-
-    
-
- 
 

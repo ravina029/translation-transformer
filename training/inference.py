@@ -1,6 +1,9 @@
 import torch
 from transformers import PreTrainedTokenizerBase
 from modelling.transformer import Transformer
+from training.data import preprocess_sentence
+from training.tokenization import DEFAULT_MAX_LENGTH
+
 
 
 def greedy_decode(
@@ -8,16 +11,18 @@ def greedy_decode(
     tokenizer: PreTrainedTokenizerBase,
     german_sentence: str,
     device: torch.device,
-    max_length: int = 128,
+    max_length: int = DEFAULT_MAX_LENGTH,
 ) -> str:
     """
     Translate one German sentence using greedy autoregressive decoding.
     """
     if not isinstance(german_sentence, str):
-        raise TypeError( "german_sentence must be a string" )
+        raise TypeError("german_sentence must be a string")
 
     if not german_sentence.strip():
-        raise ValueError( "german_sentence must not be empty" )
+        raise ValueError("german_sentence must not be empty")
+    
+    german_sentence = preprocess_sentence(german_sentence)
 
     if tokenizer.bos_token_id is None:
         raise ValueError( "tokenizer must define a BOS token" )
