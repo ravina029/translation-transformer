@@ -25,10 +25,10 @@ def build_tokenizer (local_files_only: bool = False,) -> PreTrainedTokenizerBase
 
     # current mask logic requires the beginning and end token to be different from the padding token.
     if tokenizer.bos_token_id == tokenizer.pad_token_id:
-        raise ValueError( "The BOS and PAD token IDs must be different" )
+        raise ValueError("The BOS and PAD token IDs must be different")
 
     if tokenizer.eos_token_id == tokenizer.pad_token_id:
-        raise ValueError( "The EOS and PAD token IDs must be different" )
+        raise ValueError("The EOS and PAD token IDs must be different")
 
     return tokenizer
 
@@ -41,10 +41,10 @@ def tokenize_sentences(
     Tokenize and dynamically right-pad a batch of sentences.
     """
     if isinstance(sentences, str):
-        raise TypeError( "sentences must be a sequence of strings, " "not one string" )
+        raise TypeError("sentences must be a sequence of strings, " "not one string")
 
     if len(sentences) == 0:
-        raise ValueError( "sentences must contain at least one sentence" )
+        raise ValueError("sentences must contain at least one sentence")
 
     if not isinstance(max_length, int):
         raise TypeError("max_length must be an integer")
@@ -54,10 +54,10 @@ def tokenize_sentences(
 
     for sentence in sentences:
         if not isinstance(sentence, str):
-            raise TypeError( "Every sentence must be a string" )
+            raise TypeError("Every sentence must be a string")
 
         if not sentence.strip():
-            raise ValueError( "Sentences must not be empty" )
+            raise ValueError("Sentences must not be empty")
 
     return tokenizer(
         list(sentences),
@@ -80,7 +80,7 @@ def tokenize_translation_batch(
     """
 
     if len(german_sentences) != len(english_sentences):
-        raise ValueError( "German and English batches must have the same size" )
+        raise ValueError("German and English batches must have the same size")
 
     source_encoding = tokenize_sentences(
         tokenizer=tokenizer,
@@ -95,6 +95,3 @@ def tokenize_translation_batch(
     )
 
     return source_encoding, target_encoding
-
-
- 

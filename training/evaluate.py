@@ -51,7 +51,7 @@ def validate_one_epoch(
                         batch["labels"].reshape(-1), )
 
             if not torch.isfinite(loss):
-                        raise ValueError( "validation loss is not finite" )
+                        raise ValueError("validation loss is not finite")
 
             total_loss += loss.item()
 

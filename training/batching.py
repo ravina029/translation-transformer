@@ -16,16 +16,16 @@ def create_minibatches(
     Split aligned German-English sentence pairs into mini-batches.
     """
     if len(german_sentences) != len(english_sentences):
-        raise ValueError( "German and English datasets must contain " "the same number of sentences" )
+        raise ValueError("German and English datasets must contain " "the same number of sentences")
 
     if len(german_sentences) == 0:
-        raise ValueError("dataset must not be empty" )
+        raise ValueError("dataset must not be empty")
 
     if not isinstance(batch_size, int):
-        raise TypeError( "batch_size must be an integer" )
+        raise TypeError("batch_size must be an integer")
 
     if batch_size <= 0:
-        raise ValueError( "batch_size must be positive" )
+        raise ValueError("batch_size must be positive")
 
     # Create indices so German-English pairs remain aligned.
     indices = list(range(len(german_sentences)))
@@ -35,18 +35,18 @@ def create_minibatches(
 
     batches = []
 
-    for start in range( 0, len(indices),batch_size, ):
-        batch_indices = indices[ start:start + batch_size ]
+    for start in range(0, len(indices),batch_size, ):
+        batch_indices = indices[start:start + batch_size]
 
-        german_batch = [ german_sentences[index] for index in batch_indices ]
+        german_batch = [german_sentences[index] for index in batch_indices]
 
-        english_batch = [ english_sentences[index] for index in batch_indices ]
+        english_batch = [english_sentences[index] for index in batch_indices ]
 
-        batches.append(( german_batch, english_batch,))
+        batches.append((german_batch, english_batch, ))
 
     return batches
 
-def move_batch_to_device( batch: dict[str, torch.Tensor], device: torch.device, ) -> dict[str, torch.Tensor]:
+def move_batch_to_device(batch: dict[str, torch.Tensor], device: torch.device, ) -> dict[str, torch.Tensor]:
     """
     Move all tensors in a prepared batch to the selected device.
     """
@@ -65,10 +65,10 @@ def prepare_translation_batch(
     Tokenize a German-English batch and prepare model inputs and labels.
     """
     if len(german_sentences) != len(english_sentences):
-        raise ValueError("German and English batches must contain " "the same number of sentences"  )
+        raise ValueError("German and English batches must contain " "the same number of sentences")
 
     if len(german_sentences) == 0:
-        raise ValueError( "translation batch must not be empty" )
+        raise ValueError("translation batch must not be empty")
 
     source_encoding, target_encoding = (
         tokenize_translation_batch(
@@ -86,7 +86,7 @@ def prepare_translation_batch(
     target_mask = target_encoding["attention_mask"].bool()
 
     if target_token_ids.size(1) < 2:
-        raise ValueError( "target sequences must contain at least " "two tokens for target shifting" )
+        raise ValueError("target sequences must contain at least " "two tokens for target shifting")
 
     # Decoder sees every target token except the last one.
     decoder_input_ids = target_token_ids[:, :-1]

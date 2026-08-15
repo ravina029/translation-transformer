@@ -25,13 +25,13 @@ def greedy_decode(
     german_sentence = preprocess_sentence(german_sentence)
 
     if tokenizer.bos_token_id is None:
-        raise ValueError( "tokenizer must define a BOS token" )
+        raise ValueError("tokenizer must define a BOS token")
 
     if tokenizer.eos_token_id is None:
-        raise ValueError( "tokenizer must define an EOS token" )
+        raise ValueError("tokenizer must define an EOS token")
 
     if max_length <= 1:
-        raise ValueError( "max_length must be greater than 1" )
+        raise ValueError("max_length must be greater than 1")
 
     model.eval()
 
@@ -49,11 +49,11 @@ def greedy_decode(
     source_mask = source_encoding["attention_mask" ].bool().to(device)
 
     # Decoder starts only with BOS.
-    generated_token_ids = torch.tensor( [[tokenizer.bos_token_id]], dtype=torch.long, device=device, )
+    generated_token_ids = torch.tensor([[tokenizer.bos_token_id]], dtype=torch.long, device=device, )
 
     with torch.no_grad():
         for _ in range(max_length - 1):
-            target_mask = torch.ones_like( generated_token_ids, dtype=torch.bool, )
+            target_mask = torch.ones_like(generated_token_ids, dtype=torch.bool, )
 
             logits = model(
                 source_token_ids=source_token_ids,
@@ -64,7 +64,7 @@ def greedy_decode(
             # Only the final decoder position predicts the next token.
             next_token_logits = logits[:, -1, :]
 
-            next_token_id = torch.argmax( next_token_logits, dim=-1, keepdim=True, )
+            next_token_id = torch.argmax(next_token_logits, dim=-1, keepdim=True, )
 
             generated_token_ids = torch.cat(
                 [ generated_token_ids,
@@ -76,6 +76,6 @@ def greedy_decode(
             if next_token_id.item() == tokenizer.eos_token_id:
                 break
 
-    translation = tokenizer.decode( generated_token_ids[0], skip_special_tokens=True, )
+    translation = tokenizer.decode(generated_token_ids[0], skip_special_tokens=True, )
 
     return translation.strip()

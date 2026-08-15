@@ -137,10 +137,10 @@ def main() -> None:
         raise ValueError("tokenizer must define a padding token")
 
     print("Loading training data...")
-    german_train, english_train = (load_translation_pairs( split="train", subset_size=args.train_size, ) )
+    german_train, english_train = (load_translation_pairs( split="train", subset_size=args.train_size, ))
 
     print("Loading validation data...")
-    german_validation, english_validation = (load_translation_pairs( split="validation", subset_size=args.validation_size, ) )
+    german_validation, english_validation = (load_translation_pairs( split="validation", subset_size=args.validation_size, ))
 
     vocabulary_size = len(tokenizer)
 

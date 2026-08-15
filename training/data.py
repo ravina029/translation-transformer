@@ -24,16 +24,11 @@ def preprocess_translation_pair(
     """
     validate and clean one German-Enlish sentence Pair.
     """
-    german_sentence = preprocess_sentence(
-        german_sentence
-    )
+    german_sentence = preprocess_sentence(german_sentence)
 
-    english_sentence = preprocess_sentence(
-        english_sentence
-    )
+    english_sentence = preprocess_sentence(english_sentence)
 
     return german_sentence, english_sentence
-
 
 def load_translation_pairs(
         split: str,
@@ -44,10 +39,10 @@ def load_translation_pairs(
         raise ValueError(f"split must be one of {sorted(VALID_SPLITS)}, " f"got {split!r}")
 
     if not isinstance(subset_size, int):
-        raise TypeError( "subset_size must be an integer" )
+        raise TypeError("subset_size must be an integer")
 
     if subset_size <= 0:
-        raise ValueError( "subset_size must be positive" )
+        raise ValueError("subset_size must be positive")
 
     dataset= load_dataset(DATASET_NAME,
                           DATASET_CONFIG,
