@@ -8,7 +8,7 @@ from transformers import PreTrainedTokenizerBase
 from modelling.transformer import Transformer
 from training.batching import (create_minibatches,prepare_translation_batch, move_batch_to_device,)
 from training.data import load_translation_pairs
-from training.tokenization import build_tokenizer
+from training.tokenization import ( DEFAULT_MAX_LENGTH, build_tokenizer, )
 from training.evaluate import validate_one_epoch
 
 
@@ -18,7 +18,6 @@ from training.checkpoint import save_checkpoint
 TRAIN_SIZE = 5000
 VALIDATION_SIZE = 500
 BATCH_SIZE = 4
-MAX_LENGTH = 128
 NUMBER_OF_EPOCHS = 5
 HIDDEN_SIZE = 128
 NUMBER_OF_HEADS = 4
@@ -155,7 +154,7 @@ def main() -> None:
         number_of_decoder_layers=NUMBER_OF_DECODER_LAYERS,
         source_padding_token_id=tokenizer.pad_token_id,
         target_padding_token_id=tokenizer.pad_token_id,
-        max_length=MAX_LENGTH,
+        max_length=DEFAULT_MAX_LENGTH,
         dropout=DROPOUT,
     )
 
@@ -181,7 +180,7 @@ def main() -> None:
             optimizer=optimizer,
             device=device,
             batch_size=args.batch_size,
-            max_length=MAX_LENGTH,
+            max_length=DEFAULT_MAX_LENGTH,
         )
 
         validation_loss = validate_one_epoch(
@@ -192,7 +191,7 @@ def main() -> None:
             criterion=criterion,
             device=device,
             batch_size=args.batch_size,
-            max_length=MAX_LENGTH,
+            max_length=DEFAULT_MAX_LENGTH,
         )
 
         epoch_time = time.perf_counter() - epoch_start_time

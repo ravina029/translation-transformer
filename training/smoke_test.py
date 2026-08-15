@@ -2,11 +2,10 @@ import torch
 from modelling.transformer import Transformer
 from training.batching import prepare_translation_batch
 from training.data import load_translation_pairs
-from training.tokenization import build_tokenizer
+from training.tokenization import (build_tokenizer, DEFAULT_MAX_LENGTH, )
 
 
 BATCH_SIZE = 4
-MAX_LENGTH = 128
 
 HIDDEN_SIZE = 128
 NUMBER_OF_HEADS = 4
@@ -31,7 +30,7 @@ def main() -> None:
         tokenizer=tokenizer, 
         german_sentences=german_sentences,
         english_sentences=english_sentences, 
-        max_length=MAX_LENGTH, )
+        max_length=DEFAULT_MAX_LENGTH, )
 
     # same tokenizer is used for source and target languages.
     vocabulary_size = len(tokenizer)
@@ -50,7 +49,7 @@ def main() -> None:
         number_of_decoder_layers=NUMBER_OF_DECODER_LAYERS,
         source_padding_token_id=tokenizer.pad_token_id,
         target_padding_token_id=tokenizer.pad_token_id,
-        max_length=MAX_LENGTH,
+        max_length=DEFAULT_MAX_LENGTH,
         dropout=DROPOUT,
     )
 
