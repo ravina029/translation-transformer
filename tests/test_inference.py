@@ -7,6 +7,9 @@ class FakeTokenizer:
     bos_token_id = 0
     eos_token_id = 2
 
+    def __init__(self):
+        self.last_text = None
+
     def __call__(
         self,
         text,
@@ -15,11 +18,25 @@ class FakeTokenizer:
         max_length=128,
         return_tensors="pt",
     ):
+        self.last_text = text
+
         return {
             "input_ids": torch.tensor([[0, 3, 2]]),
             "attention_mask": torch.tensor([[1, 1, 1]]),
         }
 
+    def test_greedy_decode_normalizes_source_sentence():
+        tokenizer = FakeTokenizer()
+        model = FakeModel(next_tokens=[2])
+
+        greedy_decode(
+            model=model,
+            tokenizer=tokenizer,
+            german_sentence="  Hallo    Welt  ",
+            device=torch.device("cpu"),
+        )
+
+        assert tokenizer.last_text == "Hallo Welt"
     def decode(
         self,
         token_ids,

@@ -1,7 +1,7 @@
 import pytest
 import torch
 import training.batching as batching_module
-from training.batching import create_minibatches, prepare_translation_batch
+from training.batching import (create_minibatches, prepare_translation_batch, move_batch_to_device, )
 
 def test_create_minibatches() -> None:
     german_sentences = [
@@ -156,3 +156,18 @@ def test_prepare_translation_batch_rejects_empty_batch() -> None:
             german_sentences=[],
             english_sentences=[],
         )
+
+
+def test_move_batch_to_device() -> None:
+    batch = {
+        "source_token_ids": torch.tensor([[1, 2, 3]]),
+        "source_mask": torch.tensor([[True, True, True]]),
+    }
+
+    device = torch.device("cpu")
+
+    moved_batch = move_batch_to_device( batch=batch, device=device, )
+    assert moved_batch.keys() == batch.keys()
+
+    for tensor in moved_batch.values():
+        assert tensor.device == device

@@ -3,7 +3,7 @@ import training.data as data_module
 from training.data import (load_translation_pairs, preprocess_sentence, preprocess_translation_pair, )
 
 
-def test_process_sentence() -> None:
+def test_preprocess_sentence() -> None:
     sentence = "  Ich   mag   Äpfel.  "
 
     result = preprocess_sentence(sentence)
