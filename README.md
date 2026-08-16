@@ -1,8 +1,8 @@
 # Translation Transformer
 
-A PyTorch implementation of a small German-to-English Transformer following *Attention Is All You Need*.
+A PyTorch implementation of a small German-to-English Transformer following the architecture introduced in *Attention Is All You Need*.
 
-The project focuses on implementing, debugging, training, and running a Transformer model from scratch rather than achieving state-of-the-art translation quality.
+The project focuses on implementing, debugging, training, and running a Transformer rather than achieving state-of-the-art translation quality.
 
 ## Features
 
@@ -25,7 +25,6 @@ The project focuses on implementing, debugging, training, and running a Transfor
 * CUDA, Apple MPS, and CPU support
 
 ## Project Structure
-
 ```text
 translation-transformer/
 ├── modelling/          # Transformer architecture components
@@ -39,7 +38,6 @@ translation-transformer/
 ```
 
 ## Setup
-
 Create and activate a virtual environment:
 
 ```bash
@@ -54,8 +52,7 @@ pip install -r requirements.txt
 ```
 
 ## Model
-
-The Transformer follows the standard encoder-decoder architecture.
+The model uses a standard Transformer encoder-decoder architecture.
 
 Scaled dot-product attention is computed as:
 
@@ -81,9 +78,10 @@ The final decoder representation is projected to target-vocabulary logits:
 (batch_size, target_length, target_vocabulary_size)
 ```
 
-## Data and Tokenization
+The implementation uses a reduced model size, a limited WMT17 subset, and a simplified Adam training configuration so that training remains feasible on local hardware. It is therefore not intended as an exact reproduction of the original paper's training setup.
 
-The project uses the WMT17 German-English translation dataset.
+## Data and Tokenization
+The project uses the WMT17 German-English translation dataset (`wmt/wmt17`, configuration `de-en`), with German as the source language and English as the target language.
 
 Tokenization uses:
 
@@ -110,7 +108,6 @@ Labels:        I like apples <EOS>
 ```
 
 ## Training
-
 Training can be run with the default configuration:
 
 ```bash
@@ -153,7 +150,6 @@ outputs/checkpoints/transformer_train5000_val500.pt
 ```
 
 ## Training Experiment
-
 A development training run used the following configuration:
 
 ```text
@@ -175,7 +171,6 @@ Device:              Apple MPS
 ```
 
 ### Results
-
 ```text
 Epoch   Training Loss   Validation Loss
 1       7.9270          8.2466
@@ -193,10 +188,7 @@ Total training time:  14.77 minutes
 
 Validation loss was lowest after the first epoch and increased during later epochs while training loss continued to decrease, indicating that this small development configuration begins to overfit quickly.
 
-Checkpoint files are excluded from version control because of their size.
-
 ## Checkpointing
-
 The best checkpoint is saved whenever validation loss improves.
 
 A checkpoint contains:
@@ -207,12 +199,13 @@ A checkpoint contains:
 * training loss
 * validation loss
 
+Checkpoint files are excluded from version control because of their size.
+
 Saved checkpoints can be loaded later for inference or continued experimentation.
 
 When loading a checkpoint, the Transformer must be constructed using the same architecture and tokenizer vocabulary that were used during training.
 
 ## Translation
-
 Greedy autoregressive decoding is implemented in `training/inference.py`.
 
 Generation starts with the BOS token and predicts one token at a time using the token with the highest output logit. Generation stops when EOS is predicted or the maximum sequence length is reached.
@@ -229,7 +222,7 @@ By default, the script looks for the following checkpoint:
 outputs/checkpoints/transformer_train5000_val500.pt
 ```
 
-Checkpoint files are not included in the repository because of their size. Run the training command first to create a checkpoint, or provide an existing checkpoint with `--checkpoint`.
+Run the training command first to create a checkpoint, or provide an existing checkpoint with `--checkpoint`.
 
 A different checkpoint can be selected with:
 
@@ -246,7 +239,6 @@ python translate.py --help
 ```
 
 ## Tests
-
 Run the complete test suite with:
 
 ```bash
@@ -267,18 +259,32 @@ The tests cover:
 * backward propagation
 * greedy autoregressive decoding
 
+A final local test run using Python 3.11.4 produced:
+
+```text
+61 passed in 6.78s
+```
+
 Additional end-to-end pipeline validation can be run with:
 
 ```bash
 python -m training.smoke_test
 ```
 
-The smoke test loads a small real WMT17 batch, prepares the model inputs, runs a complete Transformer forward pass, and verifies the output shape and numerical finiteness.
+The smoke test loads a small real WMT17 batch, prepares the model inputs, runs a complete Transformer forward pass, and verifies the output shape and numerical finiteness. The final smoke-test run completed successfully.
 
 ## Limitations
-
 The model is intentionally small and is trained from scratch on a limited subset of WMT17 so that training remains feasible on local hardware.
 
-The shared BART tokenizer has a relatively large vocabulary compared with the size of the training subset, which further limits the translation quality achievable with this development configuration.
+The shared BART tokenizer has a 50,265-token vocabulary, which is large relative to the 5,000 training sentence pairs used in the development run. Consequently, the model receives relatively little supervision for learning the target-token distribution, and high translation quality is not expected.
 
-Translation quality is therefore limited. The purpose of the project is to demonstrate correct Transformer implementation, masking, batching, training, validation, checkpointing, and autoregressive inference rather than competitive machine-translation performance.
+The experiment is intended to demonstrate the Transformer implementation, masking, batching, training, validation, checkpointing, and autoregressive inference rather than competitive machine-translation performance.
+
+## Possible Improvements
+Possible extensions beyond the current development configuration include:
+
+* training on a larger subset of WMT17;
+* training a smaller German-English subword tokenizer instead of using the 50,265-token BART vocabulary;
+* using the Transformer learning-rate warmup and scheduling strategy from the original paper;
+* experimenting with embedding/output-weight tying and larger model configurations;
+* adding beam-search decoding for improved inference quality.
