@@ -8,50 +8,69 @@ The project focuses on implementing, debugging, training, and running a Transfor
 
 * Scaled dot-product attention implemented from scratch
 * Multi-head attention implemented from scratch
-* Padding and causal attention masks
+* Padding and causal attention masking
 * Sinusoidal positional encoding
-* Transformer encoder and decoder
-* Encoder-decoder cross-attention
+* Transformer encoder-decoder architecture with cross-attention
 * WMT17 German-English data loading
-* `facebook/bart-base` tokenizer for text-to-token conversion, without pretrained BART model weights
-* Dynamic right padding and autoregressive target shifting
-* Padding-aware cross-entropy loss
-* Adam optimization
-* Training and validation loops
-* Best-validation checkpoint saving and loading
+* `facebook/bart-base` tokenizer for tokenization, without pretrained BART model weights
+* Autoregressive target shifting for training
+* Training and validation pipeline with best-checkpoint saving
 * Configurable training CLI
-* Greedy autoregressive decoding
-* German-to-English translation CLI
+* Greedy autoregressive decoding and German-to-English translation CLI
 * CUDA, Apple MPS, and CPU support
 
 ## Project Structure
+
 ```text
 translation-transformer/
 ├── modelling/          # Transformer architecture components
 ├── training/           # Data, tokenization, batching, training, validation, checkpointing, and inference
 ├── tests/              # Unit and integration tests
 ├── outputs/
-│   └── checkpoints/    # Saved model checkpoints
+│   └── checkpoints/    # Generated model checkpoints
 ├── translate.py        # German-to-English inference CLI
 ├── requirements.txt    # Python dependencies
 └── README.md
 ```
 
 ## Setup
-Create and activate a virtual environment:
+
+The project was developed and tested with Python 3.11.4.
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/ravina029/translation-transformer.git
+cd translation-transformer
+```
+
+### 2. Create and activate a virtual environment
+
+On macOS or Linux:
 
 ```bash
 python3 -m venv .tvenv
 source .tvenv/bin/activate
 ```
 
-Install dependencies:
+On Windows:
 
 ```bash
+python -m venv .tvenv
+.tvenv\Scripts\activate
+```
+
+### 3. Install dependencies
+
+```bash
+python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
+An internet connection is required on the first run to download the `facebook/bart-base` tokenizer and the WMT17 dataset.
+
 ## Model
+
 The model uses a standard Transformer encoder-decoder architecture.
 
 Scaled dot-product attention is computed as:
@@ -61,8 +80,7 @@ Attention(Q, K, V) = softmax(QK^T / sqrt(d_k)) V
 ```
 
 The encoder uses bidirectional self-attention and position-wise feed-forward layers.
-
-The decoder uses:
+The decoder consists of:
 
 1. causal self-attention;
 2. encoder-decoder cross-attention;
@@ -81,9 +99,10 @@ The final decoder representation is projected to target-vocabulary logits:
 The implementation uses a reduced model size, a limited WMT17 subset, and a simplified Adam training configuration so that training remains feasible on local hardware. It is therefore not intended as an exact reproduction of the original paper's training setup.
 
 ## Data and Tokenization
+
 The project uses the WMT17 German-English translation dataset (`wmt/wmt17`, configuration `de-en`), with German as the source language and English as the target language.
 
-Tokenization uses:
+Text is tokenized using:
 
 ```text
 facebook/bart-base
@@ -108,19 +127,20 @@ Labels:        I like apples <EOS>
 ```
 
 ## Training
-Training can be run with the default configuration:
+
+Training with the default development configuration can be started with:
 
 ```bash
 python -m training.train
 ```
 
-Available command-line options:
+View the available command-line options with:
 
 ```bash
 python -m training.train --help
 ```
 
-The main configurable options are:
+The configurable options are:
 
 ```text
 --train-size
@@ -130,7 +150,7 @@ The main configurable options are:
 --learning-rate
 ```
 
-Example:
+For example:
 
 ```bash
 python -m training.train \
@@ -143,13 +163,26 @@ python -m training.train \
 
 The training pipeline automatically selects CUDA, Apple MPS, or CPU depending on availability.
 
-Checkpoints are named automatically from the requested dataset sizes, for example:
+Checkpoint names are generated from the requested training and validation subset sizes. For the default development configuration, the checkpoint path is:
 
 ```text
 outputs/checkpoints/transformer_train5000_val500.pt
 ```
 
+For a quick end-to-end functionality check, a much smaller run can be used:
+
+```bash
+python -m training.train \
+    --train-size 16 \
+    --validation-size 8 \
+    --batch-size 4 \
+    --epochs 1
+```
+
+This small run verifies data loading, model training, validation, and checkpoint creation. It is not intended to produce meaningful translations.
+
 ## Training Experiment
+
 A development training run used the following configuration:
 
 ```text
@@ -171,6 +204,7 @@ Device:              Apple MPS
 ```
 
 ### Results
+
 ```text
 Epoch   Training Loss   Validation Loss
 1       7.9270          8.2466
@@ -189,9 +223,10 @@ Total training time:  14.77 minutes
 Validation loss was lowest after the first epoch and increased during later epochs while training loss continued to decrease, indicating that this small development configuration begins to overfit quickly.
 
 ## Checkpointing
+
 The best checkpoint is saved whenever validation loss improves.
 
-A checkpoint contains:
+Each checkpoint contains:
 
 * model parameters
 * optimizer state
@@ -199,32 +234,29 @@ A checkpoint contains:
 * training loss
 * validation loss
 
-Checkpoint files are excluded from version control because of their size.
+Checkpoint files are generated locally and excluded from version control because of their size.
 
-Saved checkpoints can be loaded later for inference or continued experimentation.
-
-When loading a checkpoint, the Transformer must be constructed using the same architecture and tokenizer vocabulary that were used during training.
+When loading a checkpoint, the Transformer must be constructed using the same architecture and tokenizer vocabulary used during training.
 
 ## Translation
+
 Greedy autoregressive decoding is implemented in `training/inference.py`.
 
-Generation starts with the BOS token and predicts one token at a time using the token with the highest output logit. Generation stops when EOS is predicted or the maximum sequence length is reached.
+Generation starts with the BOS token and predicts one token at a time using the token with the highest output logit. It stops when EOS is predicted or the maximum sequence length is reached.
 
-Run translation with:
+After running the default training configuration, translate a German sentence with:
 
 ```bash
 python translate.py "Wiederaufnahme der Sitzungsperiode"
 ```
 
-By default, the script looks for the following checkpoint:
+The default translation command expects:
 
 ```text
 outputs/checkpoints/transformer_train5000_val500.pt
 ```
 
-Run the training command first to create a checkpoint, or provide an existing checkpoint with `--checkpoint`.
-
-A different checkpoint can be selected with:
+A different checkpoint can be specified explicitly:
 
 ```bash
 python translate.py \
@@ -232,13 +264,14 @@ python translate.py \
     --checkpoint outputs/checkpoints/model.pt
 ```
 
-View translation CLI options with:
+View all translation CLI options with:
 
 ```bash
 python translate.py --help
 ```
 
 ## Tests
+
 Run the complete test suite with:
 
 ```bash
@@ -253,34 +286,36 @@ The tests cover:
 * positional encoding
 * encoder and decoder behavior
 * encoder-decoder cross-attention
-* batching and target shifting
+* batching and autoregressive target shifting
 * Transformer output shapes
 * loss computation
 * backward propagation
 * greedy autoregressive decoding
 
-A final local test run using Python 3.11.4 produced:
+A final verification from a fresh repository clone using Python 3.11.4 produced:
 
 ```text
-61 passed in 6.78s
+61 passed
 ```
 
-Additional end-to-end pipeline validation can be run with:
+For an additional end-to-end check using real WMT17 data, run:
 
 ```bash
 python -m training.smoke_test
 ```
 
-The smoke test loads a small real WMT17 batch, prepares the model inputs, runs a complete Transformer forward pass, and verifies the output shape and numerical finiteness. The final smoke-test run completed successfully.
+The smoke test loads a small WMT17 batch, prepares the model inputs, performs a complete Transformer forward pass, and verifies output shape and numerical finiteness. The final fresh-clone smoke-test run completed successfully.
 
 ## Limitations
-The model is intentionally small and is trained from scratch on a limited subset of WMT17 so that training remains feasible on local hardware.
 
-The shared BART tokenizer has a 50,265-token vocabulary, which is large relative to the 5,000 training sentence pairs used in the development run. Consequently, the model receives relatively little supervision for learning the target-token distribution, and high translation quality is not expected.
+The model is intentionally small and trained from scratch on a limited subset of WMT17 so that training remains feasible on local hardware.
 
-The experiment is intended to demonstrate the Transformer implementation, masking, batching, training, validation, checkpointing, and autoregressive inference rather than competitive machine-translation performance.
+The shared BART tokenizer has a 50,265-token vocabulary, which is large relative to the 5,000 sentence pairs used in the development training run. Consequently, the model receives relatively little supervision for learning the target-token distribution, and high translation quality is not expected.
+
+The experiment is intended to demonstrate Transformer implementation, masking, batching, training, validation, checkpointing, and autoregressive inference rather than competitive machine-translation performance.
 
 ## Possible Improvements
+
 Possible extensions beyond the current development configuration include:
 
 * training on a larger subset of WMT17;
